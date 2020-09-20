@@ -1,0 +1,96 @@
+package de.chaosolymp.portals.bukkit
+
+import com.google.common.io.ByteStreams
+import com.sk89q.worldedit.WorldEdit
+import com.sk89q.worldedit.bukkit.BukkitAdapter
+import com.sk89q.worldedit.bukkit.WorldEditPlugin
+import com.sk89q.worldedit.math.BlockVector3
+import com.sk89q.worldedit.world.World
+import com.sk89q.worldguard.WorldGuard
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin
+import de.chaosolymp.portals.bukkit.listener.PluginCommunicationListener
+import de.chaosolymp.portals.bukkit.listener.PortalListener
+import de.chaosolymp.portals.core.UUIDUtils
+import net.md_5.bungee.api.ChatColor
+import net.md_5.bungee.api.ChatMessageType
+import net.md_5.bungee.api.chat.ComponentBuilder
+import org.bukkit.block.Block
+import org.bukkit.entity.Player
+import org.bukkit.plugin.java.JavaPlugin
+import java.awt.Color
+
+class BukkitPlugin: JavaPlugin() {
+
+    private var worldGuard: WorldGuard? = null
+
+    private lateinit var pluginCommunicationListener: PluginCommunicationListener
+
+    override fun onEnable() {
+        this.pluginCommunicationListener = PluginCommunicationListener(this)
+        this.server.pluginManager.registerEvents(PortalListener(this),this)
+        this.server.messenger.registerIncomingPluginChannel(this, "BungeeCord", this.pluginCommunicationListener)
+        this.server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
+
+        if(this.server.pluginManager.isPluginEnabled("WorldGuard")) {
+            this.worldGuard = WorldGuard.getInstance()
+        }
+    }
+
+    internal fun handlePortalAppearance(player: Player) {
+        val builder = ComponentBuilder("> Schleiche um dich zu teleportieren <") // TODO: multi lang
+        builder.color(ChatColor.of(Color(155, 89, 182)))
+        builder.font("uniform")
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, *builder.create())
+    }
+
+    internal fun teleport(player: Player, block: Block) {
+        val world = block.location.world!!.name
+        val x = block.location.blockX
+        val y = block.location.blockY
+        val z = block.location.blockZ
+
+        val output = ByteStreams.newDataOutput(world.length + 54)
+        val uuid = UUIDUtils.getBytesFromUUID(player.uniqueId)
+        output.writeUTF("portals:authorize_teleport")
+        output.write(uuid)
+        output.writeUTF(world)
+        output.writeInt(x)
+        output.writeInt(y)
+        output.writeInt(z)
+    }
+
+    internal fun canCreatePortal(player: Player): Boolean {
+        // TODO check lwc
+        // TODO: check under block: ENDPORTALFRAME
+        return !isInSpawnRadius(player) && hasRegionPermissions(player)
+    }
+
+    private fun isInSpawnRadius(player: Player): Boolean {
+        if(player.isOp) { // op's can make everything in spawn radius
+            return false
+        }
+        val location = player.location
+        val spawnLocation = location.world?.spawnLocation
+
+        return spawnLocation?.distance(location)!! < this.server.spawnRadius // player is in spawn radius
+    }
+
+    private fun hasRegionPermissions(player: Player): Boolean {
+        var res = true
+        this.worldGuard?.let { worldGuard ->
+            {
+                val location = player.location
+                worldGuard.platform.regionContainer?.let { regionContainer ->
+                    regionContainer.get(BukkitAdapter.adapt(location.world))?.let {
+                        res = it.getApplicableRegions(BlockVector3.at(location.blockX, location.blockY, location.blockZ))
+                            ?.isOwnerOfAll(WorldGuardPlugin.inst().wrapPlayer(player))!! // owner is required to create portals (todo make it configurable)
+                    }
+
+
+                }
+            }
+        }
+
+        return res
+    }
+}

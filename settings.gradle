@@ -1,0 +1,5 @@
+rootProject.name = 'portals'
+
+include 'portals-core'
+include 'portals-bungee'
+include 'portals-bukkit'
