@@ -1,11 +1,37 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm'
+    id 'com.github.johnrengelman.shadow'
 }
+
+group 'de.chaosolymp'
+version rootProject.version
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+}
+
+shadowJar {
+    configurations = [project.configurations.compile]
+    relocate('kotlin', project.group + '.portals.core.libs.kotlin')
+    relocate('org.intellij.lang.annotations', project.group + '.portals.core.libs.annotations.intellij')
+    relocate('org.jetbrains.annotations', project.group + '.portals.core.libs.annotations.jetbrains')
+}
+
+artifacts {
+    archives shadowJar
+}
+
+processResources {
+    inputs.property "version", project.version
+    from(sourceSets.main.resources.srcDirs) {
+        include 'plugin.yml'
+        expand 'version': project.version
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'plugin.yml'
+    }
 }

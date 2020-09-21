@@ -1,9 +1,10 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm'
+    id 'com.github.johnrengelman.shadow'
 }
 
 group 'de.chaosolymp'
-version '1.0-SNAPSHOT'
+version rootProject.version
 
 repositories {
     mavenCentral()
@@ -12,8 +13,18 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compile project(":portals-core")
     compileOnly "org.spigotmc:spigot-api:1.16.3-R0.1-SNAPSHOT"
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.3'
-    compileOnly project(":portals-core")
+}
+
+shadowJar {
+    configurations = [project.configurations.compile]
+    relocate('kotlin', project.group + '.portals.core.libs.kotlin')
+    relocate('org.intellij.lang.annotations', project.group + '.portals.core.libs.annotations.intellij')
+    relocate('org.jetbrains.annotations', project.group + '.portals.core.libs.annotations.jetbrains')
+}
+
+artifacts {
+    archives shadowJar
 }

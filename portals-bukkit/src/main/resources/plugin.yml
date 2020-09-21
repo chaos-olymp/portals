@@ -1,0 +1,4 @@
+name: "Portals"
+main: "de.chaosolymp.portals.bukkit.BukkitPlugin"
+version: "${version}"
+authors: ["DeepRobin"]

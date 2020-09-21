@@ -1,0 +1,4 @@
+name: "Portals"
+main: "de.chaosolymp.portals.bungee.BungeePlugin"
+version: "${version}"
+authors: ["DeepRobin"]

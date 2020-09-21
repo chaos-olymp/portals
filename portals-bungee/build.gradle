@@ -1,9 +1,10 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm'
+    id 'com.github.johnrengelman.shadow'
 }
 
 group 'de.chaosolymp'
-version '1.0-SNAPSHOT'
+version rootProject.version
 
 repositories {
     mavenCentral()
@@ -11,8 +12,31 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    implementation group: "com.zaxxer", name: "HikariCP", version: "3.4.5"
-    implementation project(":portals-core")
+    compile project(":portals-core")
+    compile group: "com.zaxxer", name: "HikariCP", version: "3.4.5"
     compileOnly group: 'net.md-5', name: 'bungeecord-api', version: '1.16-R0.3'
+}
+
+shadowJar {
+    configurations = [project.configurations.compile]
+    relocate('kotlin', project.group + '.portals.core.libs.kotlin')
+    relocate('org.intellij.lang.annotations', project.group + '.portals.core.libs.annotations.intellij')
+    relocate('org.jetbrains.annotations', project.group + '.portals.core.libs.annotations.jetbrains')
+    relocate('com.zaxxer.hikari', project.group + '.portals.bungee.libs.hikari')
+    relocate('org.slf4j', project.group + '.portals.bungee.libs.slf4j')
+}
+
+artifacts {
+    archives shadowJar
+}
+
+processResources {
+    inputs.property "version", project.version
+    from(sourceSets.main.resources.srcDirs) {
+        include 'bungee.yml'
+        expand 'version': project.version
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'bungee.yml'
+    }
 }
