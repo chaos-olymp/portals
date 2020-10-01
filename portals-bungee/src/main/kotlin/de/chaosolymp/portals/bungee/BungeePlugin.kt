@@ -1,5 +1,6 @@
 package de.chaosolymp.portals.bungee
 
+import de.chaosolymp.portals.bungee.command.PortalCommand
 import de.chaosolymp.portals.bungee.config.DatabaseConfiguration
 import de.chaosolymp.portals.bungee.config.MessageConfiguration
 import de.chaosolymp.portals.bungee.listener.PluginMessageListener
@@ -31,6 +32,7 @@ class BungeePlugin: Plugin() {
 
         this.pluginMessageListener = PluginMessageListener(this)
         this.proxy.pluginManager.registerListener(this, this.pluginMessageListener)
+        this.proxy.pluginManager.registerCommand(this, PortalCommand(this))
 
         this.logger.info("Plugin warmup finished (Took ${System.currentTimeMillis() - startTime}ms).")
     }
