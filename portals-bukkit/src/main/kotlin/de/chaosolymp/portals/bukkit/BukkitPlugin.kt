@@ -14,6 +14,7 @@ import de.chaosolymp.portals.core.UUIDUtils
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.ComponentBuilder
+import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
@@ -78,9 +79,10 @@ class BukkitPlugin: JavaPlugin() {
     }
 
     internal fun canCreatePortal(player: Player): Boolean {
-        // TODO check lwc
-        // TODO: check under block: ENDPORTALFRAME
-        return !isInSpawnRadius(player) && hasRegionPermissions(player)
+        val blockLocation = player.location.subtract(0.0, 1.0, 0.0)
+        val material = player.location.world!!.getBlockAt(blockLocation).type
+
+        return material == Material.END_PORTAL_FRAME && !isInSpawnRadius(player) && hasRegionPermissions(player)
     }
 
     private fun isInSpawnRadius(player: Player): Boolean {
@@ -101,7 +103,7 @@ class BukkitPlugin: JavaPlugin() {
                 worldGuard.platform.regionContainer?.let { regionContainer ->
                     regionContainer.get(BukkitAdapter.adapt(location.world))?.let {
                         res = it.getApplicableRegions(BlockVector3.at(location.blockX, location.blockY, location.blockZ))
-                            ?.isOwnerOfAll(WorldGuardPlugin.inst().wrapPlayer(player))!! // owner is required to create portals (todo make it configurable)
+                            ?.isOwnerOfAll(WorldGuardPlugin.inst().wrapPlayer(player))!! // owner is required to create portals
                     }
 
 

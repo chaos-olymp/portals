@@ -1,11 +1,12 @@
 package de.chaosolymp.portals.bungee
 
+import de.chaosolymp.portals.bungee.event.PortalCreateEvent
+import de.chaosolymp.portals.bungee.event.PortalRemoveEvent
 import de.chaosolymp.portals.core.NumberUtils
 import de.chaosolymp.portals.core.Portal
 import de.chaosolymp.portals.core.UUIDUtils
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
-import java.sql.PreparedStatement
 import java.sql.Statement
 import java.sql.Timestamp
 import java.time.Instant
@@ -58,6 +59,13 @@ class PortalManager(private val plugin: BungeePlugin) {
     
     fun createPortal(owner: UUID, name: String, server: String, public: Boolean, world: String, x: Int, y: Int, z: Int): Int? {
         this.plugin.databaseConfiguration.dataSource.connection.use {
+            val event = PortalCreateEvent()
+            plugin.proxy.pluginManager.callEvent(event)
+
+            if(event.isCancelled) {
+                return null
+            }
+
             val stmt = it.prepareStatement("INSERT INTO `portals` (owner, name, public, created, server, world, x, y, z) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)
             stmt.setBytes(1,  UUIDUtils.getBytesFromUUID(owner))
             stmt.setString(2, name)
@@ -155,20 +163,41 @@ class PortalManager(private val plugin: BungeePlugin) {
     }
 
     fun remove(id: Int) {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("DELETE FROM `portals` WHERE id = ?;")
-            stmt.setInt(1, id)
-            stmt.execute()
+        val event = PortalRemoveEvent()
+        plugin.proxy.pluginManager.callEvent(event)
 
+        if(event.isCancelled) {
+            return
+        }
+
+        this.plugin.databaseConfiguration.dataSource.connection.use {
             val unlinkStmt = it.prepareStatement("UPDATE `portals` SET `link` = NULL WHERE link = ?;")
             unlinkStmt.setInt(1, id)
             unlinkStmt.execute()
+
+            val deleteStmt = it.prepareStatement("DELETE FROM `portals` WHERE id = ?;")
+            deleteStmt.setInt(1, id)
+            deleteStmt.execute()
         }
     }
 
-    // TODO: Improve this using extra query with self-joining to delete the link
     fun remove(name: String) {
-        this.remove(getIdOfName(name))
+        val event = PortalRemoveEvent()
+        plugin.proxy.pluginManager.callEvent(event)
+
+        if(event.isCancelled) {
+            return
+        }
+
+        this.plugin.databaseConfiguration.dataSource.connection.use {
+            val unlinkStmt = it.prepareStatement("UPDATE `portals` SET `link` = NULL WHERE link = (SELECT id FROM portals WHERE name = ? LIMIT 1);")
+            unlinkStmt.setString(1, name)
+            unlinkStmt.execute()
+
+            val deleteStmt = it.prepareStatement("DELETE FROM `portals` WHERE name = ?;")
+            deleteStmt.setString(1, name)
+            deleteStmt.execute()
+        }
     }
 
     fun getIdOfName(name: String): Int {

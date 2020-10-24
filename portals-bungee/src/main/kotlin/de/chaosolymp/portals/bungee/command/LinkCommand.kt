@@ -15,13 +15,13 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
                     val origin = args[0]
                     val target = args[1]
 
-                    val originId = if (NumberUtils.isNumber(origin)) {
+                    val originId = if (NumberUtils.isUnsignedNumber(origin)) {
                         Integer.parseUnsignedInt(origin)
                     } else {
                         plugin.portalManager.getIdOfName(origin)
                     }
 
-                    val targetId = if (NumberUtils.isNumber(target)) {
+                    val targetId = if (NumberUtils.isUnsignedNumber(target)) {
                         Integer.parseUnsignedInt(target)
                     } else {
                         plugin.portalManager.getIdOfName(target)

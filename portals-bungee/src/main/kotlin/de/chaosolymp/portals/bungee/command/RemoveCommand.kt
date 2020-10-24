@@ -14,7 +14,7 @@ class RemoveCommand(private val plugin: BungeePlugin) : SubCommand {
                 val portal = args[0]
 
                 if (plugin.portalManager.doesNameOrIdExist(portal)) {
-                    val id = if (NumberUtils.isNumber(portal)) {
+                    val id = if (NumberUtils.isUnsignedNumber(portal)) {
                         Integer.parseUnsignedInt(portal)
                     } else {
                         plugin.portalManager.getIdOfName(portal)

@@ -10,7 +10,7 @@ class InfoCommand(private val plugin: BungeePlugin) : SubCommand {
     override fun execute(sender: CommandSender, args: Array<out String>?) {
         if (sender.hasPermission("portals.info")) {
             if (args?.size == 1) {
-                val portal = if (NumberUtils.isNumber(args[0])) {
+                val portal = if (NumberUtils.isUnsignedNumber(args[0])) {
                     this.plugin.portalManager.getPortal(args[0].toInt())
                 } else {
                     this.plugin.portalManager.getPortal(args[0])

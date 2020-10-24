@@ -16,9 +16,9 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
                     val name = args[0]
                     if (this.plugin.portalManager.isNameValid(name)) {
                         if (!this.plugin.portalManager.doesNameExist(name)) {
-                            val future = CompletableFuture<LocationResponse>()
-                            this.plugin.pluginMessageListener.requestLocation(sender, future)
-                            future.thenAccept {
+                            val locationFuture = CompletableFuture<LocationResponse>()
+                            this.plugin.pluginMessageListener.requestLocation(sender, locationFuture)
+                            locationFuture.thenAccept {
                                 if (it.canCreatePortal) {
                                     val id = this.plugin.portalManager.createPortal(
                                         sender.uniqueId,
@@ -31,14 +31,17 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
                                         it.z
                                     )
                                     if (id != null) {
-                                        // TODO replace end portal frame with end portal
-                                        sender.sendMessage(
-                                            this.plugin.messageConfiguration.getMessage(
-                                                "command.create",
-                                                Replacement("name", name),
-                                                Replacement("id", id)
+                                        val blockChangeFuture = CompletableFuture<Void>()
+                                        this.plugin.pluginMessageListener.sendBlockChange(sender, blockChangeFuture)
+                                        blockChangeFuture.thenAccept {
+                                            sender.sendMessage(
+                                                this.plugin.messageConfiguration.getMessage(
+                                                    "command.create",
+                                                    Replacement("name", name),
+                                                    Replacement("id", id)
+                                                )
                                             )
-                                        )
+                                        }
                                     } else {
                                         sender.sendMessage(
                                             this.plugin.messageConfiguration.getMessage(
