@@ -62,7 +62,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
 
                     val out = ByteStreams.newDataOutput(48 + portal!!.world.length)
 
-                    out.writeUTF(IDENTIFIER_LOCATION) // 4 byte + length
+                    out.writeUTF(IDENTIFIER_AUTHORIZE_TELEPORT) // 4 byte + length
                     out.write(uuidArray) // 16 byte
                     out.writeUTF(portal.world) // 34 byte + portal.world.length
                     out.writeInt(portal.x) // 4 byte
