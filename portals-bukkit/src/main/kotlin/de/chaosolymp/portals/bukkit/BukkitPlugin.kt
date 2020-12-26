@@ -61,6 +61,7 @@ class BukkitPlugin: JavaPlugin() {
 
     @Suppress("UnstableApiUsage")
     internal fun teleport(player: Player, block: Block) {
+        println("U")
         val world = block.location.world!!.name
         val x = block.location.blockX
         val y = block.location.blockY

@@ -26,6 +26,7 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
     @EventHandler
     fun handleSneakToggle(event: PlayerToggleSneakEvent) {
         if(event.isSneaking) {
+            println("R")
             val location = event.player.location
             val block = location.world!!.getBlockAt(location)
             if(block.type == PORTAL_MATERIAL) {
