@@ -55,7 +55,6 @@ class BukkitPlugin: JavaPlugin() {
     internal fun handlePortalAppearance(player: Player) {
         val builder = ComponentBuilder(config.getString("messages.sneak-to-tp"))
         builder.color(ChatColor.of(Color(155, 89, 182)))
-        builder.font("uniform")
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, *builder.create())
     }
 
