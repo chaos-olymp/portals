@@ -19,7 +19,7 @@ class PortalCommand(private val plugin: BungeePlugin) : Command("portal") {
     }
 
     override fun execute(sender: CommandSender?, args: Array<out String>) {
-        val cmd = if(args.size < 0) {
+        val cmd = if(args.isNotEmpty()) {
             commandRegistry[args[0]] ?: commandRegistry["help"]
         } else {
             commandRegistry["help"]
