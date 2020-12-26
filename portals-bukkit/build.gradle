@@ -25,6 +25,17 @@ shadowJar {
     relocate('org.jetbrains.annotations', project.group + '.portals.core.libs.annotations.jetbrains')
 }
 
+processResources {
+    inputs.property "version", project.version
+    from(sourceSets.main.resources.srcDirs) {
+        include 'plugin.yml'
+        expand 'version': project.version
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'plugin.yml'
+    }
+}
+
 artifacts {
     archives shadowJar
 }
