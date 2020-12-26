@@ -41,10 +41,13 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                     val x = input.readInt()
                     val y = input.readInt()
                     val z = input.readInt()
+                    println("A")
 
                     this.plugin.server.getPlayer(uuid)?.let { target ->
                         {
+                            println("B")
                             this.plugin.server.getWorld(world).let {
+                                println("C")
                                 val location = Location(it, x.toDouble(), y.toDouble(), z.toDouble())
                                 target.teleport(location)
                             }
