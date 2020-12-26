@@ -44,14 +44,14 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                     println("A")
 
                     this.plugin.server.getPlayer(uuid)?.let { target ->
-                        {
-                            println("B")
-                            this.plugin.server.getWorld(world).let {
-                                println("C")
-                                val location = Location(it, x.toDouble(), y.toDouble(), z.toDouble())
-                                target.teleport(location)
-                            }
+
+                        println("B")
+                        this.plugin.server.getWorld(world).let {
+                            println("C")
+                            val location = Location(it, x.toDouble(), y.toDouble(), z.toDouble())
+                            target.teleport(location)
                         }
+
                     }
                 }
                 IDENTIFIER_BLOCK_CHANGE -> {
