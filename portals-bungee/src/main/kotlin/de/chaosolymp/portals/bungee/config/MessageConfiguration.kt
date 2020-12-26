@@ -60,7 +60,7 @@ class MessageConfiguration(private val config: Configuration) {
         var string = ChatColor.translateAlternateColorCodes('&', this.config.getString(key)!!)
 
         replacements.forEach { string = string.replace("{${it.key}}", it.value.toString()) }
-        this.getAllVariableKeys()?.forEach { string = string.replace("%$it%", this.getVariable(it)) }
+        this.getAllVariableKeys()?.forEach { string = if(string.contains("%$it%")) string.replace("%$it%", this.getVariable(it)) else string }
 
         return string
     }
