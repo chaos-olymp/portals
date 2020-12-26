@@ -27,7 +27,7 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
                                         false,
                                         it.world,
                                         it.x,
-                                        it.y,
+                                        it.y - 1,
                                         it.z
                                     )
                                     if (id != null) {
