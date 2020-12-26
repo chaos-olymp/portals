@@ -45,7 +45,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                 val uuid = UUIDUtils.getUUIDFromBytes(uuidArray)
                 val world = input.readUTF()
                 val x = input.readInt()
-                val y = input.readInt()
+                val y = input.readInt() - 1
                 val z = input.readInt()
 
                 val server = this.plugin.proxy.getPlayer(uuid).server.info.name
