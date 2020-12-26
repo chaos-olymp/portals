@@ -74,6 +74,8 @@ class BukkitPlugin: JavaPlugin() {
         output.writeInt(x)
         output.writeInt(y)
         output.writeInt(z)
+
+        player.sendPluginMessage(this, "BungeeCord", output.toByteArray())
     }
 
     internal fun canCreatePortal(player: Player): Boolean {
