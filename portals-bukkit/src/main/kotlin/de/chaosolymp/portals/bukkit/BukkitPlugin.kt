@@ -44,6 +44,7 @@ class BukkitPlugin: JavaPlugin() {
             configFile.createNewFile()
             config = YamlConfiguration()
             config.addDefault("messages.sneak-to-tp", "> Schleiche um dich zu teleportieren <")
+            config.options().copyDefaults(true)
             config.save(configFile)
             this.logger.info("Default configuration ${configFile.name} created!")
         } else {
