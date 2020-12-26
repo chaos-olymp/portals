@@ -205,6 +205,7 @@ class PortalManager(private val plugin: BungeePlugin) {
             val query = it.prepareStatement("SELECT id FROM `portals` WHERE name = ?;")
             query.setString(1, name)
             val rs = query.executeQuery()
+            rs.next()
             return rs.getInt(1)
         }
     }
@@ -241,6 +242,7 @@ class PortalManager(private val plugin: BungeePlugin) {
             val query = it.prepareStatement("SELECT `public` FROM `portals` WHERE id = ?;")
             query.setInt(1, id)
             val rs = query.executeQuery()
+            rs.next()
             return rs.getBoolean(1)
         }
     }
@@ -251,6 +253,7 @@ class PortalManager(private val plugin: BungeePlugin) {
             query.setBytes(1, UUIDUtils.getBytesFromUUID(player))
             query.setInt(2, id)
             val rs = query.executeQuery()
+            rs.next()
             return rs.getBoolean(1)
         }
     }
@@ -260,6 +263,7 @@ class PortalManager(private val plugin: BungeePlugin) {
             val query = it.prepareStatement("SELECT name FROM `portals` WHERE id = ?;")
             query.setInt(1, id)
             val rs = query.executeQuery()
+            rs.next()
             return rs.getString(1)
         }
     }
@@ -268,6 +272,7 @@ class PortalManager(private val plugin: BungeePlugin) {
         this.plugin.databaseConfiguration.dataSource.connection.use {
             val query = it.prepareStatement("SELECT COUNT(*) FROM `portals`;")
             val rs = query.executeQuery()
+            rs.next()
             return rs.getInt(1)
         }
     }
