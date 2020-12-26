@@ -9,9 +9,9 @@ import org.bukkit.entity.Player
 import org.bukkit.plugin.messaging.PluginMessageListener
 
 class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMessageListener {
-
+    @Suppress("UnstableApiUsage")
     override fun onPluginMessageReceived(channel: String, player: Player, message: ByteArray) {
-        if(channel == "BungeeCord" || channel == "bungeecord:main") {
+        if (channel == "BungeeCord" || channel == "bungeecord:main") {
             val input = ByteStreams.newDataInput(message)
             when (input.readUTF()) {
                 IDENTIFIER_LOCATION -> {
@@ -42,12 +42,14 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                     val y = input.readInt()
                     val z = input.readInt()
 
-                    this.plugin.server.getPlayer(uuid)?.let { target -> {
-                        this.plugin.server.getWorld(world).let {
-                            val location = Location(it, x.toDouble(), y.toDouble(), z.toDouble())
-                            target.teleport(location)
+                    this.plugin.server.getPlayer(uuid)?.let { target ->
+                        {
+                            this.plugin.server.getWorld(world).let {
+                                val location = Location(it, x.toDouble(), y.toDouble(), z.toDouble())
+                                target.teleport(location)
+                            }
                         }
-                    }}
+                    }
                 }
                 IDENTIFIER_BLOCK_CHANGE -> {
                     val uuidBuffer = ByteArray(16)

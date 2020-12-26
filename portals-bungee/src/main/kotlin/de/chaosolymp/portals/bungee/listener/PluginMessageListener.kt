@@ -16,12 +16,13 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
 
     private val blockChangeMap = mutableMapOf<UUID, CompletableFuture<Void>>()
 
+    @Suppress("UnstableApiUsage")
     @EventHandler
     fun handlePluginMessage(event: PluginMessageEvent) {
-        if(event.tag == "BungeeCord" || event.tag == "bungeecord:main") {
+        if (event.tag == "BungeeCord" || event.tag == "bungeecord:main") {
             val input = ByteStreams.newDataInput(event.data)
             val subChannel = input.readUTF()
-            if(subChannel == IDENTIFIER_LOCATION) {
+            if (subChannel == IDENTIFIER_LOCATION) {
                 val uuidArray = ByteArray(16)
                 input.readFully(uuidArray)
                 val uuid = UUIDUtils.getUUIDFromBytes(uuidArray)
@@ -37,7 +38,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                 } else {
                     this.plugin.proxy.logger.warning("${event.sender.socketAddress} sent location request for non-requested uuid $uuid.")
                 }
-            } else if(subChannel == IDENTIFIER_AUTHORIZE_TELEPORT) {
+            } else if (subChannel == IDENTIFIER_AUTHORIZE_TELEPORT) {
                 val uuidArray = ByteArray(16)
                 input.readFully(uuidArray)
                 val uuid = UUIDUtils.getUUIDFromBytes(uuidArray)
@@ -49,13 +50,13 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                 val server = this.plugin.proxy.getPlayer(uuid).server.info.name
 
                 val id = this.plugin.portalManager.getPortalIdAt(server, world, x, y, z)
-                if(id != null) {
+                if (id != null) {
                     val link = this.plugin.portalManager.getPortalLink(id)
                     val portal = this.plugin.portalManager.getPortal(link)
 
                     val serverInfo = this.plugin.proxy.getServerInfo(portal?.server)
 
-                    if(portal?.server != server) {
+                    if (portal?.server != server) {
                         this.plugin.proxy.getPlayer(uuid).connect(serverInfo)
                     }
 
@@ -72,7 +73,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                 } else {
                     this.plugin.logger.warning("${event.sender.socketAddress}: caught invalid teleportation")
                 }
-            } else if(subChannel == IDENTIFIER_BLOCK_CHANGE_ACCEPTED) {
+            } else if (subChannel == IDENTIFIER_BLOCK_CHANGE_ACCEPTED) {
                 val uuidArray = ByteArray(16)
                 input.readFully(uuidArray)
                 val uuid = UUIDUtils.getUUIDFromBytes(uuidArray)
@@ -86,6 +87,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
         }
     }
 
+    @Suppress("UnstableApiUsage")
     fun requestLocation(player: ProxiedPlayer, future: CompletableFuture<LocationResponse>) {
         map[player.uniqueId] = future
         val output = ByteStreams.newDataOutput(36)
@@ -96,6 +98,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
         player.server.sendData("BungeeCord", output.toByteArray())
     }
 
+    @Suppress("UnstableApiUsage")
     fun sendBlockChange(player: ProxiedPlayer, future: CompletableFuture<Void>) {
         blockChangeMap[player.uniqueId] = future
         val output = ByteStreams.newDataOutput(36)

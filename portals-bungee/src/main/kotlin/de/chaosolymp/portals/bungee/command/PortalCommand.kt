@@ -3,7 +3,6 @@ package de.chaosolymp.portals.bungee.command
 import de.chaosolymp.portals.bungee.BungeePlugin
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.plugin.Command
-import java.util.*
 
 class PortalCommand(private val plugin: BungeePlugin) : Command("portal") {
 
@@ -19,14 +18,14 @@ class PortalCommand(private val plugin: BungeePlugin) : Command("portal") {
         commandRegistry["help"] = HelpCommand(this.plugin, this)
     }
 
-    override fun execute(sender: CommandSender?, args: Array<out String>?) {
-        val cmd = if(args!!.size < 0) {
+    override fun execute(sender: CommandSender?, args: Array<out String>) {
+        val cmd = if(args.size < 0) {
             commandRegistry[args[0]] ?: commandRegistry["help"]
         } else {
             commandRegistry["help"]
         }
 
-        cmd!!.execute(sender!!, Arrays.copyOfRange(args, 1, args.size))
+        cmd!!.execute(sender!!, args.copyOfRange(1, args.size))
     }
 
 }

@@ -3,7 +3,7 @@ package de.chaosolymp.portals.bungee.event
 import net.md_5.bungee.api.plugin.Cancellable
 import net.md_5.bungee.api.plugin.Event
 
-class PortalRemoveEvent(): Event(), Cancellable {
+class PortalRemoveEvent: Event(), Cancellable {
     private var cancel: Boolean = false
 
     override fun setCancelled(cancel: Boolean) {

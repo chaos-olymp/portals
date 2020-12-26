@@ -34,7 +34,12 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
                     return
                 }
             } else if (args.contains("-public")) {
-                mode = PortalListType.PUBLIC
+                if (sender.hasPermission("portals.list.public")) {
+                    mode = PortalListType.PUBLIC
+                } else {
+                    sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-permission"))
+                    return
+                }
             }
 
             if (page == null || page == 0) {

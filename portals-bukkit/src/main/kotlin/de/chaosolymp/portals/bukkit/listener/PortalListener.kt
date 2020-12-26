@@ -1,12 +1,11 @@
 package de.chaosolymp.portals.bukkit.listener
 
 import de.chaosolymp.portals.bukkit.BukkitPlugin
-import org.bukkit.Material
+import de.chaosolymp.portals.bukkit.PORTAL_MATERIAL
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
-import java.util.*
 
 class PortalListener(private val plugin: BukkitPlugin) : Listener {
 
@@ -15,7 +14,7 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
         event.to?.let {
             val world = it.world!!
             val block = world.getBlockAt(it)
-            if(block.type == Material.END_PORTAL) {
+            if(block.type == PORTAL_MATERIAL) {
                 plugin.handlePortalAppearance(event.player)
                 if(event.player.isSneaking) {
                     plugin.teleport(event.player, block)
@@ -29,7 +28,7 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
         if(event.isSneaking) {
             val location = event.player.location
             val block = location.world!!.getBlockAt(location)
-            if(block.type == Material.END_PORTAL) {
+            if(block.type == PORTAL_MATERIAL) {
                 plugin.teleport(event.player, block)
             }
         }

@@ -1,11 +1,8 @@
 package de.chaosolymp.portals.bukkit
 
 import com.google.common.io.ByteStreams
-import com.sk89q.worldedit.WorldEdit
 import com.sk89q.worldedit.bukkit.BukkitAdapter
-import com.sk89q.worldedit.bukkit.WorldEditPlugin
 import com.sk89q.worldedit.math.BlockVector3
-import com.sk89q.worldedit.world.World
 import com.sk89q.worldguard.WorldGuard
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin
 import de.chaosolymp.portals.bukkit.listener.PluginCommunicationListener
@@ -14,7 +11,6 @@ import de.chaosolymp.portals.core.UUIDUtils
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.ComponentBuilder
-import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
@@ -63,6 +59,7 @@ class BukkitPlugin: JavaPlugin() {
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, *builder.create())
     }
 
+    @Suppress("UnstableApiUsage")
     internal fun teleport(player: Player, block: Block) {
         val world = block.location.world!!.name
         val x = block.location.blockX
@@ -82,7 +79,7 @@ class BukkitPlugin: JavaPlugin() {
         val blockLocation = player.location.subtract(0.0, 1.0, 0.0)
         val material = player.location.world!!.getBlockAt(blockLocation).type
 
-        return material == Material.END_PORTAL_FRAME && !isInSpawnRadius(player) && hasRegionPermissions(player)
+        return material == PORTAL_BASE_MATERIAL && !isInSpawnRadius(player) && hasRegionPermissions(player)
     }
 
     private fun isInSpawnRadius(player: Player): Boolean {
