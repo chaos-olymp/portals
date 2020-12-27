@@ -36,32 +36,41 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
                                     )
                                 ) {
                                     plugin.portalManager.link(originId, targetId)
-                                    this.plugin.messageConfiguration.getMessage(
-                                        "command.link",
-                                        Replacement("origin-name", plugin.portalManager.getNameOfId(originId)),
-                                        Replacement("origin-id", originId),
-                                        Replacement("link-name", plugin.portalManager.getNameOfId(targetId)),
-                                        Replacement("link-id", targetId)
-
+                                    sender.sendMessage(
+                                        this.plugin.messageConfiguration.getMessage(
+                                            "command.link",
+                                            Replacement("origin-name", plugin.portalManager.getNameOfId(originId)),
+                                            Replacement("origin-id", originId),
+                                            Replacement("link-name", plugin.portalManager.getNameOfId(targetId)),
+                                            Replacement("link-id", targetId)
+                                        )
                                     )
                                 } else {
-                                    this.plugin.messageConfiguration.getMessage(
-                                        "error.no-access-to-linked-portal"
+                                    sender.sendMessage(
+                                        this.plugin.messageConfiguration.getMessage(
+                                            "error.no-access-to-linked-portal"
+                                        )
                                     )
                                 }
                             } else {
-                                this.plugin.messageConfiguration.getMessage(
-                                    "error.no-access-to-portal"
+                                sender.sendMessage(
+                                    this.plugin.messageConfiguration.getMessage(
+                                        "error.no-access-to-portal"
+                                    )
                                 )
                             }
                         } else {
-                            this.plugin.messageConfiguration.getMessage(
-                                "error.link-not-exists"
+                            sender.sendMessage(
+                                this.plugin.messageConfiguration.getMessage(
+                                    "error.link-not-exists"
+                                )
                             )
                         }
                     } else {
-                        this.plugin.messageConfiguration.getMessage(
-                            "error.origin-not-exists"
+                        sender.sendMessage(
+                            this.plugin.messageConfiguration.getMessage(
+                                "error.origin-not-exists"
+                            )
                         )
                     }
                 } else {
