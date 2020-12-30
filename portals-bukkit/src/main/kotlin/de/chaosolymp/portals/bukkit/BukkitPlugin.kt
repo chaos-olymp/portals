@@ -12,12 +12,14 @@ import de.chaosolymp.portals.core.UUIDUtils
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.ComponentBuilder
+import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 import java.awt.Color
 import java.io.File
+import java.util.*
 
 class BukkitPlugin: JavaPlugin() {
 
@@ -26,6 +28,8 @@ class BukkitPlugin: JavaPlugin() {
     private lateinit var configFile: File
     private lateinit var config: YamlConfiguration
     private lateinit var pluginCommunicationListener: PluginCommunicationListener
+
+    internal val pendingTeleports = mutableListOf<Pair<UUID, Location>>()
 
     override fun onEnable() {
         this.pluginCommunicationListener = PluginCommunicationListener(this)
@@ -61,7 +65,6 @@ class BukkitPlugin: JavaPlugin() {
 
     @Suppress("UnstableApiUsage")
     internal fun teleport(player: Player, block: Block) {
-        println("U")
         val world = block.location.world!!.name
         val x = block.location.blockX
         val y = block.location.blockY

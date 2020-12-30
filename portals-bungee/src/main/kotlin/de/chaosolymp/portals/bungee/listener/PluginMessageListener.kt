@@ -39,7 +39,6 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                     this.plugin.proxy.logger.warning("${event.sender.socketAddress} sent location request for non-requested uuid $uuid.")
                 }
             } else if (subChannel == IDENTIFIER_AUTHORIZE_TELEPORT) {
-                println("X")
                 val uuidArray = ByteArray(16)
                 input.readFully(uuidArray)
                 val uuid = UUIDUtils.getUUIDFromBytes(uuidArray)

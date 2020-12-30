@@ -4,6 +4,7 @@ import de.chaosolymp.portals.bukkit.BukkitPlugin
 import de.chaosolymp.portals.bukkit.PORTAL_MATERIAL
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 
@@ -24,9 +25,19 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
     }
 
     @EventHandler
+    fun handleJoin(event: PlayerJoinEvent) {
+        plugin.pendingTeleports.forEach {
+            if(it.first == event.player.uniqueId) {
+                event.player.teleport(it.second)
+                plugin.pendingTeleports.remove(it)
+                return
+            }
+        }
+    }
+
+    @EventHandler
     fun handleSneakToggle(event: PlayerToggleSneakEvent) {
         if(event.isSneaking) {
-            println("R")
             val location = event.player.location
             val block = location.world!!.getBlockAt(location)
             if(block.type == PORTAL_MATERIAL) {
