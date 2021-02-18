@@ -52,12 +52,17 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                 val id = this.plugin.portalManager.getPortalIdAt(server, world, x, y, z)
                 if (id != null) {
                     val link = this.plugin.portalManager.getPortalLink(id)
+                    plugin.logger.info("link = $link")
                     val portal = this.plugin.portalManager.getPortal(link)
+                    plugin.logger.info("portal = $portal")
 
                     val serverInfo = this.plugin.proxy.getServerInfo(portal?.server)
-
+                    plugin.logger.info("serverInfo = $serverInfo")
                     if (portal?.server != server) {
+                        plugin.logger.info("connecting")
                         this.plugin.proxy.getPlayer(uuid).connect(serverInfo)
+                    } else {
+                        plugin.logger.info("Cannot connect, the player is on the same server")
                     }
 
                     val out = ByteStreams.newDataOutput(48 + portal!!.world.length)
@@ -70,8 +75,10 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                     out.writeInt(portal.z) // 4 byte
 
                     serverInfo.sendData("BungeeCord", out.toByteArray())
-
-                    println("Y")
+                    plugin.logger.info("Sent plugin message")
+                    if (portal.server != server) {
+                        this.plugin.proxy.getPlayer(uuid).connect(serverInfo)
+                    }
                 } else {
                     this.plugin.logger.warning("${event.sender.socketAddress}: caught invalid teleportation")
                 }
