@@ -117,4 +117,17 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
 
         player.server.sendData("BungeeCord", output.toByteArray())
     }
+
+    @Suppress("UnstableApiUsage")
+    fun sendBlockDestroy(server: String, world: String, x: Int, y: Int, z: Int) {
+        val output = ByteStreams.newDataOutput(20 + IDENTIFIER_BLOCK_DESTROY.length + world.length)
+
+        output.writeUTF(IDENTIFIER_BLOCK_DESTROY) // 4 byte + length
+        output.writeUTF(world) // 4 byte + length
+        output.writeInt(x) // 4 byte
+        output.writeInt(y) // 4 byte
+        output.writeInt(z) // 4 byte
+
+        plugin.proxy.servers[server]!!.sendData("BungeeCord", output.toByteArray())
+    }
 }

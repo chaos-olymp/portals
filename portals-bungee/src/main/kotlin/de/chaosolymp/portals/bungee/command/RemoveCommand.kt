@@ -22,7 +22,9 @@ class RemoveCommand(private val plugin: BungeePlugin) : SubCommand {
 
                     if (plugin.portalManager.doesPlayerOwnPortalOrHasOtherAccess(sender, id)) {
                         val cachedName = plugin.portalManager.getNameOfId(id)
+                        val portalObj = plugin.portalManager.getPortal(id)!!
                         plugin.portalManager.remove(id)
+                        plugin.pluginMessageListener.sendBlockDestroy(portalObj.server, portalObj.world, portalObj.x, portalObj.y, portalObj.z)
                         sender.sendMessage(
                             this.plugin.messageConfiguration.getMessage(
                                 "command.remove",

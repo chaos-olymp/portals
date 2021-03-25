@@ -6,6 +6,7 @@ import de.chaosolymp.portals.core.*
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.messaging.PluginMessageListener
 
 class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMessageListener {
@@ -61,6 +62,34 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                         output.writeUTF(IDENTIFIER_BLOCK_CHANGE_ACCEPTED) // 4 byte + length
                         output.write(uuidBuffer) // 16 byte
                     }
+                }
+                IDENTIFIER_BLOCK_DESTROY -> {
+                    val worldName = input.readUTF()
+                    val x = input.readInt()
+                    val y = input.readInt()
+                    val z = input.readInt()
+
+                    val chunkX = x shr 4
+                    val chunkZ = z shr 4
+
+                    val world = plugin.server.getWorld(worldName)!!
+                    val chunk = world.getChunkAt(chunkX, chunkZ)
+
+                    val loaded = chunk.isLoaded
+                    if(!loaded) {
+                        chunk.load(true)
+                    }
+
+                    val block = world.getBlockAt(x, y, z)
+                    val stack = ItemStack(block.type, 1)
+                    block.type = Material.AIR
+
+                    world.dropItem(Location(world, x.toDouble(), y.toDouble(), z.toDouble()), stack)
+
+                    if(!loaded) {
+                        chunk.unload(true)
+                    }
+
                 }
             }
         }

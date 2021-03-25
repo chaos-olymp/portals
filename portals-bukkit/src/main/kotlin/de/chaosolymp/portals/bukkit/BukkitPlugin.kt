@@ -82,7 +82,7 @@ class BukkitPlugin: JavaPlugin() {
     }
 
     internal fun canCreatePortal(player: Player): Boolean {
-        val blockLocation = player.location.block.location.subtract(0.0, 1.0, 0.0)
+        val blockLocation = player.location.subtract(0.0, 1.0, 0.0)
         val material = player.location.world!!.getBlockAt(blockLocation).type
 
         return material == PORTAL_BASE_MATERIAL && !isInSpawnRadius(player) && hasRegionPermissions(player)

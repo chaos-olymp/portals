@@ -7,8 +7,12 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
+import java.util.*
 
 class PortalListener(private val plugin: BukkitPlugin) : Listener {
+
+    private val cooldown = 3 * 1000 // In milliseconds (1 * 3000 = 3 seconds)
+    private val joinTimeMap = mutableMapOf<UUID, Long>()
 
     @EventHandler
     fun handleEnterPortal(event: PlayerMoveEvent) {
@@ -30,6 +34,7 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
             if(it.first == event.player.uniqueId) {
                 event.player.teleport(it.second)
                 plugin.pendingTeleports.remove(it)
+                joinTimeMap[it.first] = System.currentTimeMillis()
                 return
             }
         }
@@ -37,6 +42,10 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
 
     @EventHandler
     fun handleSneakToggle(event: PlayerToggleSneakEvent) {
+        if((joinTimeMap[event.player.uniqueId]?.plus(cooldown))!! > System.currentTimeMillis()) {
+            event.player.sendTitle("", "Cooldown ...", 500, 500, 500)
+            return
+        }
         if(event.isSneaking) {
             val location = event.player.location
             val block = location.world!!.getBlockAt(location)
