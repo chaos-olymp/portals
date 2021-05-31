@@ -52,6 +52,8 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
             if(block.type == PORTAL_MATERIAL) {
                 plugin.teleport(event.player, block)
             }
+        } else {
+            joinTimeMap.remove(event.player.uniqueId)
         }
     }
 
