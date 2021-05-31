@@ -4,10 +4,12 @@ import de.chaosolymp.portals.bukkit.BukkitPlugin
 import de.chaosolymp.portals.bukkit.PORTAL_MATERIAL
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 class PortalListener(private val plugin: BukkitPlugin) : Listener {
 
@@ -25,6 +27,13 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
                     plugin.teleport(event.player, block)
                 }
             }
+        }
+    }
+
+    @EventHandler
+    fun handleBreakPortal(event: BlockBreakEvent) {
+        if(event.block.type == PORTAL_MATERIAL && plugin.isValidPortal(event.player, event.block.location)) {
+            event.isCancelled = true
         }
     }
 

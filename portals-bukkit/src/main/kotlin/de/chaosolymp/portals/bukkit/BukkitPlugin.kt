@@ -8,6 +8,7 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin
 import de.chaosolymp.portals.bukkit.listener.PluginCommunicationListener
 import de.chaosolymp.portals.bukkit.listener.PortalListener
 import de.chaosolymp.portals.core.IDENTIFIER_AUTHORIZE_TELEPORT
+import de.chaosolymp.portals.core.IDENTIFIER_VALIDATE
 import de.chaosolymp.portals.core.UUIDUtils
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.ChatMessageType
@@ -20,6 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin
 import java.awt.Color
 import java.io.File
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 class BukkitPlugin: JavaPlugin() {
 
@@ -28,6 +30,7 @@ class BukkitPlugin: JavaPlugin() {
     private lateinit var configFile: File
     private lateinit var config: YamlConfiguration
     private lateinit var pluginCommunicationListener: PluginCommunicationListener
+    internal val portalRequestMap = mutableMapOf<Pair<String, Triple<Int, Int, Int>>, CompletableFuture<Boolean>>()
 
     internal val pendingTeleports = mutableListOf<Pair<UUID, Location>>()
 
@@ -115,5 +118,27 @@ class BukkitPlugin: JavaPlugin() {
         }
 
         return res
+    }
+
+    fun isValidPortal(player: Player, location: Location): Boolean {
+        val world = location.world!!.name
+        val x = location.blockX
+        val y = location.blockY
+        val z = location.blockZ
+        val output = ByteStreams.newDataOutput(world.length + 54)
+        val uuid = UUIDUtils.getBytesFromUUID(player.uniqueId)
+        output.writeUTF(IDENTIFIER_VALIDATE)
+        output.write(uuid)
+        output.writeUTF(world)
+        output.writeInt(x)
+        output.writeInt(y)
+        output.writeInt(z)
+
+        val future = CompletableFuture<Boolean>()
+        portalRequestMap[Pair(world, Triple(x, y, z))] = future
+
+        player.sendPluginMessage(this, "BungeeCord", output.toByteArray())
+
+        return future.get()
     }
 }

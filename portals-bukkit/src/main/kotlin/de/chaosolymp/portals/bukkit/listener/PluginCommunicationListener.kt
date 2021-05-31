@@ -91,6 +91,19 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                     }
 
                 }
+                IDENTIFIER_VALIDATE_RESPONSE -> {
+                    val uuidBuffer = ByteArray(16)
+                    input.readFully(uuidBuffer)
+                    val uuid = UUIDUtils.getUUIDFromBytes(uuidBuffer)
+                    val worldName = input.readUTF()
+                    val x = input.readInt()
+                    val y = input.readInt()
+                    val z = input.readInt()
+                    val valid = input.readBoolean()
+
+
+                    plugin.portalRequestMap[Pair(worldName, Triple(x, y, z))]?.complete(valid)
+                }
             }
         }
     }

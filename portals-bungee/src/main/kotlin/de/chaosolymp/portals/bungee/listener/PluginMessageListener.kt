@@ -92,6 +92,31 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                 } else {
                     this.plugin.proxy.logger.warning("${event.sender.socketAddress} sent block change response for non-requested uuid $uuid.")
                 }
+            } else if(subChannel == IDENTIFIER_VALIDATE) {
+                val uuidBuffer = ByteArray(16)
+                input.readFully(uuidBuffer)
+                val uuid = UUIDUtils.getUUIDFromBytes(uuidBuffer)
+
+                val worldName = input.readUTF()
+                val x = input.readInt()
+                val y = input.readInt()
+                val z = input.readInt()
+
+                val serverInfo = this.plugin.proxy.getPlayer(uuid).server.info
+
+                val valid = plugin.portalManager.getPortalIdAt(serverInfo.name, worldName, x, y, z) != null
+
+                val out = ByteStreams.newDataOutput(49 + worldName.length)
+
+                out.writeUTF(IDENTIFIER_VALIDATE_RESPONSE) // 4 byte + length
+                out.write(uuidBuffer) // 16 byte
+                out.writeUTF(worldName) // 34 byte + portal.world.length
+                out.writeInt(x) // 4 byte
+                out.writeInt(y) // 4 byte
+                out.writeInt(z) // 4 byte
+                out.writeBoolean(valid) // 1 byte
+
+                serverInfo.sendData("BungeeCord", out.toByteArray())
             }
         }
     }
