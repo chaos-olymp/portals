@@ -10,12 +10,18 @@ repositories {
     mavenCentral()
     maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
     maven { url "https://maven.enginehub.org/repo/" }
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/public/' }
 }
 
 dependencies {
     compile project(":portals-core")
     compileOnly "org.spigotmc:spigot-api:1.16.3-R0.1-SNAPSHOT"
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.3'
+
+    testImplementation 'com.github.seeseemelk:MockBukkit-v1.17:1.10.1'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test:1.5.31'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
 
 shadowJar {
@@ -23,6 +29,10 @@ shadowJar {
     relocate('kotlin', project.group + '.portals.core.libs.kotlin')
     relocate('org.intellij.lang.annotations', project.group + '.portals.core.libs.annotations.intellij')
     relocate('org.jetbrains.annotations', project.group + '.portals.core.libs.annotations.jetbrains')
+}
+
+test {
+    useJUnitPlatform()
 }
 
 processResources {

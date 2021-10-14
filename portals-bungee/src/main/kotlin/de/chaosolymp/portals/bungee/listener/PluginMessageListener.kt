@@ -3,6 +3,8 @@ package de.chaosolymp.portals.bungee.listener
 import com.google.common.io.ByteStreams
 import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.core.*
+import de.chaosolymp.portals.core.extensions.readUUID
+import de.chaosolymp.portals.core.extensions.writeUUID
 import net.md_5.bungee.api.connection.ProxiedPlayer
 import net.md_5.bungee.api.event.PluginMessageEvent
 import net.md_5.bungee.api.plugin.Listener
@@ -23,9 +25,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
             val input = ByteStreams.newDataInput(event.data)
             val subChannel = input.readUTF()
             if (subChannel == IDENTIFIER_LOCATION) {
-                val uuidArray = ByteArray(16)
-                input.readFully(uuidArray)
-                val uuid = UUIDUtils.getUUIDFromBytes(uuidArray)
+                val uuid = input.readUUID()
                 val canCreatePortal = input.readBoolean()
                 val world = input.readUTF()
                 val x = input.readInt()
@@ -39,9 +39,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                     this.plugin.proxy.logger.warning("${event.sender.socketAddress} sent location request for non-requested uuid $uuid.")
                 }
             } else if (subChannel == IDENTIFIER_AUTHORIZE_TELEPORT) {
-                val uuidArray = ByteArray(16)
-                input.readFully(uuidArray)
-                val uuid = UUIDUtils.getUUIDFromBytes(uuidArray)
+                val uuid = input.readUUID()
                 val world = input.readUTF()
                 val x = input.readInt()
                 val y = input.readInt()
@@ -68,7 +66,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                     val out = ByteStreams.newDataOutput(48 + portal!!.world.length)
 
                     out.writeUTF(IDENTIFIER_AUTHORIZE_TELEPORT) // 4 byte + length
-                    out.write(uuidArray) // 16 byte
+                    out.writeUUID(uuid) // 16 byte
                     out.writeUTF(portal.world) // 34 byte + portal.world.length
                     out.writeInt(portal.x) // 4 byte
                     out.writeInt(portal.y) // 4 byte

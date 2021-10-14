@@ -9,21 +9,21 @@ import de.chaosolymp.portals.bukkit.listener.PluginCommunicationListener
 import de.chaosolymp.portals.bukkit.listener.PortalListener
 import de.chaosolymp.portals.core.IDENTIFIER_AUTHORIZE_TELEPORT
 import de.chaosolymp.portals.core.IDENTIFIER_VALIDATE
-import de.chaosolymp.portals.core.UUIDUtils
-import net.md_5.bungee.api.ChatColor
+import de.chaosolymp.portals.core.extensions.writeUUID
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.ComponentBuilder
 import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
+import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPlugin
-import java.awt.Color
+import org.bukkit.plugin.java.JavaPluginLoader
 import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
-class BukkitPlugin: JavaPlugin() {
+class BukkitPlugin: JavaPlugin {
 
     private var worldGuard: WorldGuard? = null
 
@@ -34,12 +34,27 @@ class BukkitPlugin: JavaPlugin() {
 
     internal val pendingTeleports = mutableListOf<Pair<UUID, Location>>()
 
+    @Suppress("unused")
+    constructor() : super()
+
+    @Suppress("unused")
+    private constructor(loader: JavaPluginLoader,
+                          description: PluginDescriptionFile,
+                          dataFolder: File,
+                          file: File) : super(loader, description, dataFolder, file)
+
     override fun onEnable() {
         this.pluginCommunicationListener = PluginCommunicationListener(this)
         this.initConfig()
         this.server.pluginManager.registerEvents(PortalListener(this),this)
-        this.server.messenger.registerIncomingPluginChannel(this, "BungeeCord", this.pluginCommunicationListener)
-        this.server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
+
+        if (RuntimeStatics.TEST_ENVIRONMENT) {
+            this.logger.info("Skipping plugin channel listener registration because we're in TEST_ENVIRONMENT")
+        } else {
+            this.server.messenger.registerIncomingPluginChannel(this, "BungeeCord", this.pluginCommunicationListener)
+            this.server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
+            this.logger.info("Registered Plugin Channel listeners")
+        }
 
         if(this.server.pluginManager.isPluginEnabled("WorldGuard")) {
             this.worldGuard = WorldGuard.getInstance()
@@ -73,9 +88,8 @@ class BukkitPlugin: JavaPlugin() {
         val y = block.location.blockY
         val z = block.location.blockZ
         val output = ByteStreams.newDataOutput(world.length + 54)
-        val uuid = UUIDUtils.getBytesFromUUID(player.uniqueId)
         output.writeUTF(IDENTIFIER_AUTHORIZE_TELEPORT)
-        output.write(uuid)
+        output.writeUUID(player.uniqueId)
         output.writeUTF(world)
         output.writeInt(x)
         output.writeInt(y)
@@ -126,9 +140,8 @@ class BukkitPlugin: JavaPlugin() {
         val y = location.blockY
         val z = location.blockZ
         val output = ByteStreams.newDataOutput(world.length + 54)
-        val uuid = UUIDUtils.getBytesFromUUID(player.uniqueId)
         output.writeUTF(IDENTIFIER_VALIDATE)
-        output.write(uuid)
+        output.writeUUID(player.uniqueId)
         output.writeUTF(world)
         output.writeInt(x)
         output.writeInt(y)
