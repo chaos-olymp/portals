@@ -2,10 +2,8 @@ package de.chaosolymp.portals.bukkit
 
 import be.seeseemelk.mockbukkit.MockBukkit
 import be.seeseemelk.mockbukkit.ServerMock
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.bukkit.Location
+import org.junit.jupiter.api.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class BukkitPluginTests {
@@ -22,9 +20,33 @@ internal class BukkitPluginTests {
     }
 
     @Test
-    fun test() {
-
+    fun testPortalAppearanceHandling() {
+        val player = server.addPlayer()
+        plugin.handlePortalAppearance(player);
     }
+
+    @Test
+    fun testIsInSpawnRadiusOp() {
+        val player = server.addPlayer()
+        player.isOp = true;
+
+        val inSpawnRadius = plugin.isInSpawnRadius(player);
+        Assertions.assertFalse(inSpawnRadius)
+    }
+
+    // TODO: Uncomment if https://github.com/MockBukkit/MockBukkit/issues/255 was implemented
+    /*
+    @Test
+    fun testIsInSpawnRadiusNonOp() {
+        val world = server.addSimpleWorld("TestWorld")
+        world.spawnLocation = Location(world, 0.0, 0.0, 0.0)
+
+        val player = server.addPlayer()
+        player.location = Location(world, 0.0, 0.0, 0.0);
+
+        val inSpawnRadius = plugin.isInSpawnRadius(player);
+        Assertions.assertTrue(inSpawnRadius)
+    }*/
 
     @AfterAll
     fun tearDown() {

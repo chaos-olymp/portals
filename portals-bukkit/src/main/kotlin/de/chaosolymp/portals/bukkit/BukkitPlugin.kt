@@ -105,7 +105,7 @@ class BukkitPlugin: JavaPlugin {
         return material == PORTAL_BASE_MATERIAL && !isInSpawnRadius(player) && hasRegionPermissions(player)
     }
 
-    private fun isInSpawnRadius(player: Player): Boolean {
+    fun isInSpawnRadius(player: Player): Boolean {
         if(player.isOp) { // op's can make everything in spawn radius
             return false
         }

@@ -34,8 +34,8 @@ class PortalManager(private val plugin: BungeePlugin) {
                     	`y` INT NOT NULL,
                     	`z` INT NOT NULL,
                     	`link` INT unsigned DEFAULT NULL,
-                    	PRIMARY KEY (`id`,`name`)
-                    );
+                    	PRIMARY KEY (`id`, `name`)
+                    )
                 """.trimIndent()
             )
             stmt.execute()
@@ -46,7 +46,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun doesNameExist(name: String): Boolean {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("SELECT COUNT(name) FROM `portals` WHERE name = ?;")
+            val stmt = it.prepareStatement("""
+                SELECT COUNT(name) 
+                FROM `portals` 
+                WHERE name = ?
+            """.trimIndent())
             stmt.setString(1, name)
             val rs = stmt.executeQuery()
             return if(rs.next()) {
@@ -66,7 +70,10 @@ class PortalManager(private val plugin: BungeePlugin) {
                 return null
             }
 
-            val stmt = it.prepareStatement("INSERT INTO `portals` (owner, name, public, created, server, world, x, y, z) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)
+            val stmt = it.prepareStatement("""
+                INSERT INTO `portals` (owner, name, public, created, server, world, x, y, z) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(), Statement.RETURN_GENERATED_KEYS)
             stmt.setBytes(1,  UUIDUtils.getBytesFromUUID(owner))
             stmt.setString(2, name)
             stmt.setBoolean(3, public)
@@ -92,7 +99,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun setPublic(id: Int, public: Boolean) {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("UPDATE `portals` SET public = ? WHERE id = ?;")
+            val stmt = it.prepareStatement("""
+                UPDATE `portals` 
+                SET public = ? 
+                WHERE id = ?
+            """.trimIndent())
             stmt.setBoolean(1, public)
             stmt.setInt(2, id)
             stmt.execute()
@@ -101,7 +112,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun setPublic(name: String, public: Boolean) {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("UPDATE `portals` SET public = ? WHERE name = ?;")
+            val stmt = it.prepareStatement("""
+                UPDATE `portals` 
+                SET public = ? 
+                WHERE name = ?
+            """.trimIndent())
             stmt.setBoolean(1, public)
             stmt.setString(2, name)
             stmt.execute()
@@ -110,7 +125,23 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun getPortal(id: Int): Portal? {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("SELECT owner, name, display_name, public, created, updated, server, world, x, y, z, link FROM `portals` WHERE id = ?;")
+            val stmt = it.prepareStatement("""
+                SELECT 
+                    owner, 
+                    name, 
+                    display_name, 
+                    public, 
+                    created, 
+                    updated, 
+                    server, 
+                    world, 
+                    x, 
+                    y, 
+                    z, 
+                    link 
+                FROM `portals` 
+                WHERE id = ?
+            """.trimIndent())
             stmt.setInt(1, id)
             val rs = stmt.executeQuery()
 
@@ -137,7 +168,23 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun getPortal(name: String): Portal? {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("SELECT id, owner, display_name, public, created, updated, server, world, x, y, z, link FROM `portals` WHERE name = ?;")
+            val stmt = it.prepareStatement("""
+                SELECT 
+                    id, 
+                    owner, 
+                    display_name, 
+                    public, 
+                    created, 
+                    updated, 
+                    server, 
+                    world, 
+                    x, 
+                    y, 
+                    z, 
+                    link 
+                FROM `portals` 
+                WHERE name = ?
+            """.trimIndent())
             stmt.setString(1, name)
             val rs = stmt.executeQuery()
 
@@ -171,11 +218,18 @@ class PortalManager(private val plugin: BungeePlugin) {
         }
 
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val unlinkStmt = it.prepareStatement("UPDATE `portals` SET `link` = NULL WHERE link = ?;")
+            val unlinkStmt = it.prepareStatement("""
+                UPDATE `portals` 
+                SET `link` = NULL 
+                WHERE link = ?
+            """.trimIndent())
             unlinkStmt.setInt(1, id)
             unlinkStmt.execute()
 
-            val deleteStmt = it.prepareStatement("DELETE FROM `portals` WHERE id = ?;")
+            val deleteStmt = it.prepareStatement("""
+                DELETE FROM `portals` 
+                WHERE id = ?
+            """.trimIndent())
             deleteStmt.setInt(1, id)
             deleteStmt.execute()
         }
@@ -190,11 +244,18 @@ class PortalManager(private val plugin: BungeePlugin) {
         }
 
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val unlinkStmt = it.prepareStatement("UPDATE `portals` SET `link` = NULL WHERE link = (SELECT id FROM portals WHERE name = ? LIMIT 1);")
+            val unlinkStmt = it.prepareStatement("""
+                UPDATE `portals` 
+                SET `link` = NULL 
+                WHERE link = (SELECT id FROM portals WHERE name = ? LIMIT 1)
+            """.trimIndent())
             unlinkStmt.setString(1, name)
             unlinkStmt.execute()
 
-            val deleteStmt = it.prepareStatement("DELETE FROM `portals` WHERE name = ?;")
+            val deleteStmt = it.prepareStatement("""
+                DELETE FROM `portals` 
+                WHERE name = ?
+            """.trimIndent())
             deleteStmt.setString(1, name)
             deleteStmt.execute()
         }
@@ -202,7 +263,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun getIdOfName(name: String): Int {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val query = it.prepareStatement("SELECT id FROM `portals` WHERE name = ?;")
+            val query = it.prepareStatement("""
+                SELECT id 
+                FROM `portals` 
+                WHERE name = ?
+            """.trimIndent())
             query.setString(1, name)
             val rs = query.executeQuery()
             rs.next()
@@ -212,7 +277,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun link(originId: Int, linkId: Int) {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("UPDATE `portals` SET link = ? WHERE id = ?;")
+            val stmt = it.prepareStatement("""
+                UPDATE `portals` 
+                SET link = ? 
+                WHERE id = ?
+            """.trimIndent())
             stmt.setInt(1, linkId)
             stmt.setInt(2, originId)
             stmt.execute()
@@ -221,7 +290,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun rename(id: Int, name: String) {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("UPDATE `portals` SET name = ? WHERE id = ?;")
+            val stmt = it.prepareStatement("""
+                UPDATE `portals` 
+                SET name = ? 
+                WHERE id = ?
+            """.trimIndent())
             stmt.setString(1, name)
             stmt.setInt(2, id)
             stmt.execute()
@@ -230,7 +303,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun setDisplayName(id: Int, name: String) {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("UPDATE `portals` SET display_name = ? WHERE id = ?;")
+            val stmt = it.prepareStatement("""
+                UPDATE `portals` 
+                SET display_name = ? 
+                WHERE id = ?
+            """.trimIndent())
             stmt.setString(1, name)
             stmt.setInt(2, id)
             stmt.execute()
@@ -239,7 +316,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun isPublic(id: Int): Boolean {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val query = it.prepareStatement("SELECT `public` FROM `portals` WHERE id = ?;")
+            val query = it.prepareStatement("""
+                SELECT `public` 
+                FROM `portals` 
+                WHERE id = ?
+            """.trimIndent())
             query.setInt(1, id)
             val rs = query.executeQuery()
             rs.next()
@@ -249,7 +330,12 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun doesPlayerOwnPortal(player: UUID, id: Int): Boolean {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val query = it.prepareStatement("SELECT COUNT(*) FROM `portals` WHERE owner = ? AND id = ?;")
+            val query = it.prepareStatement("""
+                SELECT COUNT(*) 
+                FROM `portals` 
+                WHERE owner = ? 
+                AND id = ?
+            """.trimIndent())
             query.setBytes(1, UUIDUtils.getBytesFromUUID(player))
             query.setInt(2, id)
             val rs = query.executeQuery()
@@ -260,7 +346,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun getNameOfId(id: Int): String {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val query = it.prepareStatement("SELECT name FROM `portals` WHERE id = ?;")
+            val query = it.prepareStatement("""
+                SELECT name 
+                FROM `portals` 
+                WHERE id = ?
+            """.trimIndent())
             query.setInt(1, id)
             val rs = query.executeQuery()
             rs.next()
@@ -270,7 +360,10 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun countPortals(): Int {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val query = it.prepareStatement("SELECT COUNT(*) FROM `portals`;")
+            val query = it.prepareStatement("""
+                SELECT COUNT(*)
+                FROM `portals`
+            """.trimIndent())
             val rs = query.executeQuery()
             rs.next()
             return rs.getInt(1)
@@ -299,7 +392,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun doesIdExists(id: Int): Boolean {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("SELECT COUNT(*) FROM `portals` WHERE id = ?;")
+            val stmt = it.prepareStatement("""
+                SELECT COUNT(*) 
+                FROM `portals` 
+                WHERE id = ?
+            """.trimIndent())
             stmt.setInt(1, id)
             val rs = stmt.executeQuery()
             return if(rs.next()) {
@@ -313,7 +410,25 @@ class PortalManager(private val plugin: BungeePlugin) {
     fun getPortals(sender: CommandSender, listType: PortalListType, skip: Int, count: Int): Iterable<Portal> {
         val stmt = if(sender is ProxiedPlayer && listType == PortalListType.OWN) {
             this.plugin.databaseConfiguration.dataSource.connection.use {
-                val stmt = it.prepareStatement("SELECT id, name, owner, display_name, public, created, updated, server, world, x, y, z, link FROM `portals` LIMIT ?,? WHERE owner = ?;")
+                val stmt = it.prepareStatement("""
+                    SELECT 
+                        id, 
+                        name, 
+                        owner, 
+                        display_name, 
+                        public, 
+                        created, 
+                        updated, 
+                        server, 
+                        world, 
+                        x, 
+                        y, 
+                        z, 
+                        link 
+                    FROM `portals` 
+                    LIMIT ?, ? 
+                    WHERE owner = ?
+                """.trimIndent())
                 stmt.setInt(1, skip)
                 stmt.setInt(2, skip + count)
                 stmt.setBytes(3, UUIDUtils.getBytesFromUUID(sender.uniqueId))
@@ -321,14 +436,49 @@ class PortalManager(private val plugin: BungeePlugin) {
             }
         } else if(listType == PortalListType.PUBLIC) {
             this.plugin.databaseConfiguration.dataSource.connection.use {
-                val stmt = it.prepareStatement("SELECT id, name, owner, display_name, public, created, updated, server, world, x, y, z, link FROM `portals` LIMIT ?,? WHERE public = TRUE;")
+                val stmt = it.prepareStatement("""
+                    SELECT 
+                        id, 
+                        name, 
+                        owner, 
+                        display_name, 
+                        public, 
+                        created, 
+                        updated, 
+                        server, 
+                        world, 
+                        x, 
+                        y, 
+                        z, 
+                        link 
+                    FROM `portals` 
+                    LIMIT ?, ? 
+                    WHERE public = TRUE
+                """.trimIndent())
                 stmt.setInt(1, skip)
                 stmt.setInt(2, skip + count)
                 return@use stmt
             }
         } else {
             this.plugin.databaseConfiguration.dataSource.connection.use {
-                val stmt = it.prepareStatement("SELECT id, name, owner, display_name, public, created, updated, server, world, x, y, z, link FROM `portals` LIMIT ?,?")
+                val stmt = it.prepareStatement("""
+                    SELECT 
+                        id, 
+                        name, 
+                        owner, 
+                        display_name, 
+                        public, 
+                        created, 
+                        updated, 
+                        server, 
+                        world, 
+                        x, 
+                        y, 
+                        z, 
+                        link 
+                    FROM `portals` 
+                    LIMIT ?, ?
+                """.trimIndent())
                 stmt.setInt(1, skip)
                 stmt.setInt(2, skip + count)
                 return@use stmt
@@ -359,7 +509,15 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun getPortalIdAt(server: String, world: String, x: Int, y: Int, z: Int): Int? {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("SELECT id FROM `portals` WHERE server = ? AND world = ? AND x = ? AND y = ? AND z = ?;")
+            val stmt = it.prepareStatement("""
+                SELECT id 
+                FROM `portals` 
+                WHERE server = ? 
+                    AND world = ? 
+                    AND x = ? 
+                    AND y = ? 
+                    AND z = ?
+            """.trimIndent())
             stmt.setString(1, server)
             stmt.setString(2, world)
             stmt.setInt(3, x)
@@ -378,7 +536,11 @@ class PortalManager(private val plugin: BungeePlugin) {
 
     fun getPortalLink(id: Int): Int {
         this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("SELECT link FROM `portals` WHERE id = ?;")
+            val stmt = it.prepareStatement("""
+                SELECT link 
+                FROM `portals` 
+                WHERE id = ?
+            """.trimIndent())
             stmt.setInt(1, id)
             val rs = stmt.executeQuery()
             rs.next()
