@@ -5,6 +5,7 @@ import de.chaosolymp.portals.bungee.event.PortalRemoveEvent
 import de.chaosolymp.portals.core.NumberUtils
 import de.chaosolymp.portals.core.Portal
 import de.chaosolymp.portals.core.UUIDUtils
+import de.chaosolymp.portals.core.extensions.getUUID
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
 import java.sql.Statement
@@ -157,7 +158,10 @@ class PortalManager(private val plugin: BungeePlugin) {
                 val x = rs.getInt("x")
                 val y = rs.getInt("y")
                 val z = rs.getInt("z")
-                val link: Int? = rs.getInt("link")
+                var link: Int? = rs.getInt("link")
+                if(rs.wasNull()) {
+                    link = null
+                }
 
                 return Portal(id, uuid, name, displayName, public, created, updated, server, world, x, y, z, link)
             } else {
@@ -190,7 +194,7 @@ class PortalManager(private val plugin: BungeePlugin) {
 
             if(rs.next()) {
                 val id = rs.getInt("id")
-                val uuid = UUIDUtils.getUUIDFromBytes(rs.getBytes("owner"))
+                val uuid = rs.getUUID("owner")
                 val displayName = rs.getString("display_name")
                 val public = rs.getBoolean("public")
                 val created = rs.getTimestamp("created")
@@ -200,7 +204,10 @@ class PortalManager(private val plugin: BungeePlugin) {
                 val x = rs.getInt("x")
                 val y = rs.getInt("y")
                 val z = rs.getInt("z")
-                val link: Int? = rs.getInt("link")
+                var link: Int? = rs.getInt("link")
+                if(rs.wasNull()) {
+                    link = null
+                }
 
                 return Portal(id, uuid, name, displayName, public, created, updated, server, world, x, y, z, link)
             } else {
@@ -426,8 +433,8 @@ class PortalManager(private val plugin: BungeePlugin) {
                         z, 
                         link 
                     FROM `portals` 
-                    LIMIT ?, ? 
                     WHERE owner = ?
+                    LIMIT ?, ? 
                 """.trimIndent())
                 stmt.setInt(1, skip)
                 stmt.setInt(2, skip + count)
@@ -452,8 +459,8 @@ class PortalManager(private val plugin: BungeePlugin) {
                         z, 
                         link 
                     FROM `portals` 
-                    LIMIT ?, ? 
                     WHERE public = TRUE
+                    LIMIT ?, ? 
                 """.trimIndent())
                 stmt.setInt(1, skip)
                 stmt.setInt(2, skip + count)
@@ -489,7 +496,7 @@ class PortalManager(private val plugin: BungeePlugin) {
         while(rs.next()) {
             val id = rs.getInt("id")
             val name = rs.getString("name")
-            val uuid = UUIDUtils.getUUIDFromBytes(rs.getBytes("owner"))
+            val uuid = rs.getUUID("owner")
             val displayName = rs.getString("display_name")
             val public = rs.getBoolean("public")
             val created = rs.getTimestamp("created")
@@ -499,7 +506,10 @@ class PortalManager(private val plugin: BungeePlugin) {
             val x = rs.getInt("x")
             val y = rs.getInt("y")
             val z = rs.getInt("z")
-            val link: Int? = rs.getInt("link")
+            var link: Int? = rs.getInt("link")
+            if(rs.wasNull()) {
+                link = null
+            }
 
             list.add(Portal(id, uuid, name, displayName, public, created, updated, server, world, x, y, z, link))
         }

@@ -11,11 +11,12 @@ repositories {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 shadowJar {
-    configurations = [project.configurations.compile]
+    project.configurations.implementation.canBeResolved = true
+    configurations = [project.configurations.implementation]
     relocate('kotlin', project.group + '.portals.core.libs.kotlin')
     relocate('org.intellij.lang.annotations', project.group + '.portals.core.libs.annotations.intellij')
     relocate('org.jetbrains.annotations', project.group + '.portals.core.libs.annotations.jetbrains')
@@ -26,6 +27,7 @@ artifacts {
 }
 
 processResources {
+    duplicatesStrategy(DuplicatesStrategy.WARN)
     inputs.property "version", project.version
     from(sourceSets.main.resources.srcDirs) {
         include 'plugin.yml'

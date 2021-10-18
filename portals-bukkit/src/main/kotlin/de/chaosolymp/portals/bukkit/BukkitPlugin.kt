@@ -34,9 +34,11 @@ class BukkitPlugin: JavaPlugin {
 
     internal val pendingTeleports = mutableListOf<Pair<UUID, Location>>()
 
+    // Called via reflection in testing environment by MockBukkit
     @Suppress("unused")
     constructor() : super()
 
+    // Called via reflection in testing environment by MockBukkit
     @Suppress("unused")
     private constructor(loader: JavaPluginLoader,
                           description: PluginDescriptionFile,

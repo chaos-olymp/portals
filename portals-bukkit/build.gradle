@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    compile project(":portals-core")
+    implementation project(":portals-core")
     compileOnly "org.spigotmc:spigot-api:1.16.3-R0.1-SNAPSHOT"
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.3'
 
@@ -25,7 +25,8 @@ dependencies {
 }
 
 shadowJar {
-    configurations = [project.configurations.compile]
+    project.configurations.implementation.canBeResolved = true
+    configurations = [project.configurations.implementation]
     relocate('kotlin', project.group + '.portals.core.libs.kotlin')
     relocate('org.intellij.lang.annotations', project.group + '.portals.core.libs.annotations.intellij')
     relocate('org.jetbrains.annotations', project.group + '.portals.core.libs.annotations.jetbrains')
@@ -36,6 +37,7 @@ test {
 }
 
 processResources {
+    duplicatesStrategy(DuplicatesStrategy.WARN)
     inputs.property "version", project.version
     from(sourceSets.main.resources.srcDirs) {
         include 'plugin.yml'

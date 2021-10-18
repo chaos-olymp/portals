@@ -12,13 +12,14 @@ repositories {
 }
 
 dependencies {
-    compile project(":portals-core")
-    compile group: "com.zaxxer", name: "HikariCP", version: "3.4.5"
+    implementation project(":portals-core")
+    implementation group: "com.zaxxer", name: "HikariCP", version: "3.4.5"
     compileOnly group: 'net.md-5', name: 'bungeecord-api', version: '1.16-R0.3'
 }
 
 shadowJar {
-    configurations = [project.configurations.compile]
+    project.configurations.implementation.canBeResolved = true
+    configurations = [project.configurations.implementation]
     relocate('kotlin', project.group + '.portals.core.libs.kotlin')
     relocate('org.intellij.lang.annotations', project.group + '.portals.core.libs.annotations.intellij')
     relocate('org.jetbrains.annotations', project.group + '.portals.core.libs.annotations.jetbrains')
@@ -31,6 +32,7 @@ artifacts {
 }
 
 processResources {
+    duplicatesStrategy(DuplicatesStrategy.WARN)
     inputs.property "version", project.version
     from(sourceSets.main.resources.srcDirs) {
         include 'bungee.yml'

@@ -32,6 +32,7 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
 
     @EventHandler
     fun handleBreakPortal(event: BlockBreakEvent) {
+        // Disallow portal block breaking
         if(event.block.type == PORTAL_MATERIAL && plugin.isValidPortal(event.player, event.block.location)) {
             event.isCancelled = true
         }

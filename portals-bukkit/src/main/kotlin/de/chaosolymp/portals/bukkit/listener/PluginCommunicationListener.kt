@@ -88,7 +88,7 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
 
                 }
                 IDENTIFIER_VALIDATE_RESPONSE -> {
-                    val uuid = input.readUUID()
+                    input.readUUID()
                     val worldName = input.readUTF()
                     val x = input.readInt()
                     val y = input.readInt()
