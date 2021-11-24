@@ -27,12 +27,22 @@ class BungeePlugin: Plugin() {
 
         this.initializeMessageConfig()
         this.initializeDatabaseConfig()
+
+        val exceptionHandler = ExceptionHandler(this)
+        Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
+        this.logger.info("Initialized global exception handler")
+
         this.portalManager = PortalManager(this)
+        this.logger.info("Initialized portal manager")
+
         this.portalManager.createTable()
 
         this.pluginMessageListener = PluginMessageListener(this)
         this.proxy.pluginManager.registerListener(this, this.pluginMessageListener)
+        this.logger.info("Registered plugin message listener")
+
         this.proxy.pluginManager.registerCommand(this, PortalCommand(this))
+        this.logger.info("Registered portal command")
 
         this.logger.info("Plugin warmup finished (Took ${System.currentTimeMillis() - startTime}ms).")
     }

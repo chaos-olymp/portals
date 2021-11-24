@@ -1,6 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm'
     id 'com.github.johnrengelman.shadow'
+    id 'org.jetbrains.kotlin.kapt'
 }
 
 group 'de.chaosolymp'
@@ -11,7 +12,9 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.0'
+    compileOnly project(":portals-annotations")
+    kapt project(":portals-annotation-processor")
 }
 
 shadowJar {

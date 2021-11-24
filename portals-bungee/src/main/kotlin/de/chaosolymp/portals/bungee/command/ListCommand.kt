@@ -15,7 +15,6 @@ import net.md_5.bungee.api.chat.hover.content.Text
 class ListCommand(private val plugin: BungeePlugin) : SubCommand {
     private val itemsPerPage = 8
 
-    @ExperimentalUnsignedTypes
     override fun execute(sender: CommandSender, args: Array<out String>?) {
         if (sender.hasPermission("portals.list")) {
             val page = if (args?.size!! > 0) {
