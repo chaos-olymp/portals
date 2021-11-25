@@ -9,41 +9,47 @@ import net.md_5.bungee.api.CommandSender
 class RemoveCommand(private val plugin: BungeePlugin) : SubCommand {
 
     override fun execute(sender: CommandSender, args: Array<out String>?) {
-        if (sender.hasPermission("portals.remove")) {
-            if (args != null && args.size == 1) {
-                val portal = args[0]
-
-                if (plugin.portalManager.doesNameOrIdExist(portal)) {
-                    val id = if (NumberUtils.isUnsignedNumber(portal)) {
-                        Integer.parseUnsignedInt(portal)
-                    } else {
-                        plugin.portalManager.getIdOfName(portal)
-                    }
-
-                    if (plugin.portalManager.doesPlayerOwnPortalOrHasOtherAccess(sender, id)) {
-                        val cachedName = plugin.portalManager.getNameOfId(id)
-                        val portalObj = plugin.portalManager.getPortal(id)!!
-                        plugin.portalManager.remove(id)
-                        plugin.pluginMessageListener.sendBlockDestroy(portalObj.server, portalObj.world, portalObj.x, portalObj.y, portalObj.z)
-                        sender.sendMessage(
-                            this.plugin.messageConfiguration.getMessage(
-                                "command.remove",
-                                Replacement("id", id),
-                                Replacement(
-                                    "name", cachedName
-                                )
-                            )
-                        )
-                    } else {
-                        sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-access-to-portal"))
-                    }
-                } else {
-                    sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.not-exists"))
-                }
-            }
-        } else {
+        if (!sender.hasPermission("portals.remove")) {
             sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-permission"))
+            return
         }
-    }
+        if (args == null || args.size != 1) return
 
+        val portal = args[0]
+
+        if (!plugin.portalManager.doesNameOrIdExist(portal)) {
+            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.not-exists"))
+            return
+        }
+        val id = if (NumberUtils.isUnsignedNumber(portal)) {
+            Integer.parseUnsignedInt(portal)
+        } else {
+            plugin.portalManager.getIdOfName(portal)
+        }
+
+        if (!plugin.portalManager.doesPlayerOwnPortalOrHasOtherAccess(sender, id)) {
+            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-access-to-portal"))
+            return
+        }
+        val cachedName = plugin.portalManager.getNameOfId(id)
+        val portalObj = plugin.portalManager.getPortal(id)!!
+        plugin.portalManager.remove(id)
+        plugin.pluginMessageListener.sendBlockDestroy(
+            portalObj.server,
+            portalObj.world,
+            portalObj.x,
+            portalObj.y,
+            portalObj.z
+        )
+        sender.sendMessage(
+            this.plugin.messageConfiguration.getMessage(
+                "command.remove",
+                Replacement("id", id),
+                Replacement(
+                    "name", cachedName
+                )
+            )
+        )
+
+    }
 }

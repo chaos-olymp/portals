@@ -1,5 +1,5 @@
 name: "Portals"
 main: "de.chaosolymp.portals.bukkit.BukkitPlugin"
 version: "${version}"
-api-version: "1.16"
+api-version: "1.17"
 authors: ["DeepRobin"]

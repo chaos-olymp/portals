@@ -109,7 +109,7 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
                     Replacement("id", portal.id),
                     Replacement(
                         "owner",
-                        (this.plugin.proxy.getPlayer(portal.owner) ?: portal.owner.toString()) ?: "Server"
+                        (this.plugin.proxy.getPlayer(portal.owner) ?: portal.owner.toString())
                     ), // If player name cannot be retrieved it prints the uuid
                     Replacement("public", if (portal.public) "✓" else "×"),
                     Replacement("created", portal.created.toString()),

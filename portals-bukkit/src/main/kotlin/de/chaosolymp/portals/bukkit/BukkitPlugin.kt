@@ -11,6 +11,7 @@ import de.chaosolymp.portals.core.IDENTIFIER_AUTHORIZE_TELEPORT
 import de.chaosolymp.portals.core.IDENTIFIER_VALIDATE
 import de.chaosolymp.portals.core.extensions.writeUUID
 import de.chaosolymp.portals.core.messages.generated.serialize
+import de.chaosolymp.portals.core.messages.server_to_proxy.AuthorizeTeleportRequestPluginMessage
 import de.chaosolymp.portals.core.messages.server_to_proxy.ValidationPluginMessage
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.ComponentBuilder
@@ -95,13 +96,9 @@ class BukkitPlugin: JavaPlugin {
         val x = block.location.blockX
         val y = block.location.blockY
         val z = block.location.blockZ
-        val output = ByteStreams.newDataOutput(world.length + 54)
-        output.writeUTF(IDENTIFIER_AUTHORIZE_TELEPORT)
-        output.writeUUID(player.uniqueId)
-        output.writeUTF(world)
-        output.writeInt(x)
-        output.writeInt(y)
-        output.writeInt(z)
+
+        val output = ByteStreams.newDataOutput()
+        serialize(AuthorizeTeleportRequestPluginMessage(player.uniqueId, world, x, y, z), output)
 
         player.sendPluginMessage(this, "BungeeCord", output.toByteArray())
     }

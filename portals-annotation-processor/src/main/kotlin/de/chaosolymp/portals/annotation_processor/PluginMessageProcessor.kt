@@ -17,6 +17,7 @@ import javax.tools.Diagnostic
 @SupportedAnnotationTypes("de.chaosolymp.portals.annotations.messages.PluginMessage")
 @SupportedOptions(PluginMessageProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
 class PluginMessageProcessor : AbstractProcessor() {
+
     override fun process(annotations: MutableSet<out TypeElement>, roundEnv: RoundEnvironment): Boolean {
 
         // Check prerequisites

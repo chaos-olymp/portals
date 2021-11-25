@@ -8,29 +8,29 @@ import org.junit.jupiter.api.*
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class BukkitPluginTests {
 
-    private lateinit var server: ServerMock;
+    private lateinit var server: ServerMock
     private lateinit var plugin: BukkitPlugin
 
     @BeforeAll
     fun setup() {
-        RuntimeStatics.TEST_ENVIRONMENT = true;
+        RuntimeStatics.TEST_ENVIRONMENT = true
 
-        server = MockBukkit.mock();
+        server = MockBukkit.mock()
         plugin = MockBukkit.load(BukkitPlugin::class.java)
     }
 
     @Test
     fun testPortalAppearanceHandling() {
         val player = server.addPlayer()
-        plugin.handlePortalAppearance(player);
+        plugin.handlePortalAppearance(player)
     }
 
     @Test
     fun testIsInSpawnRadiusOp() {
         val player = server.addPlayer()
-        player.isOp = true;
+        player.isOp = true
 
-        val inSpawnRadius = plugin.isInSpawnRadius(player);
+        val inSpawnRadius = plugin.isInSpawnRadius(player)
         Assertions.assertFalse(inSpawnRadius)
     }
 
@@ -50,7 +50,7 @@ internal class BukkitPluginTests {
 
     @AfterAll
     fun tearDown() {
-        MockBukkit.unmock();
+        MockBukkit.unmock()
     }
 
 }

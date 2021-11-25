@@ -50,7 +50,7 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
             }
             is BlockChangeRequestPluginMessage -> {
                 val targetPlayer = plugin.server.getPlayer(deserialized.uuid) ?: return
-                val blockLocation = targetPlayer.location.subtract(0.0, 1.0, 0.0)
+                val blockLocation = targetPlayer.location
                 val block = blockLocation.world!!.getBlockAt(blockLocation)
                 block.setType(Material.END_PORTAL, false)
 
@@ -76,7 +76,12 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                 val stack = ItemStack(block.type, 1)
                 block.type = Material.AIR
 
-                world.dropItem(Location(world, deserialized.x.toDouble(), deserialized.y.toDouble(), deserialized.z.toDouble()), stack)
+                world.dropItem(Location(
+                    world,
+                    deserialized.x.toDouble(),
+                    deserialized.y.toDouble(),
+                    deserialized.z.toDouble()
+                ), stack)
 
                 if(!loaded) {
                     chunk.unload(true)

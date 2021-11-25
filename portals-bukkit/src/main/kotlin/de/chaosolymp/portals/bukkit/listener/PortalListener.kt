@@ -9,7 +9,6 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import java.util.*
-import java.util.concurrent.CompletableFuture
 
 class PortalListener(private val plugin: BukkitPlugin) : Listener {
 
@@ -52,7 +51,8 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
 
     @EventHandler
     fun handleSneakToggle(event: PlayerToggleSneakEvent) {
-        if((joinTimeMap[event.player.uniqueId]?.plus(cooldown))!! > System.currentTimeMillis()) {
+        val joinTime = joinTimeMap[event.player.uniqueId]?.plus(cooldown)
+        if(joinTime != null && joinTime > System.currentTimeMillis()) {
             event.player.sendTitle("", "Cooldown ...", 500, 500, 500)
             return
         }
