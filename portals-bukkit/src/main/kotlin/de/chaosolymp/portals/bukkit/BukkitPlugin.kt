@@ -10,6 +10,8 @@ import de.chaosolymp.portals.bukkit.listener.PortalListener
 import de.chaosolymp.portals.core.IDENTIFIER_AUTHORIZE_TELEPORT
 import de.chaosolymp.portals.core.IDENTIFIER_VALIDATE
 import de.chaosolymp.portals.core.extensions.writeUUID
+import de.chaosolymp.portals.core.messages.generated.serialize
+import de.chaosolymp.portals.core.messages.server_to_proxy.ValidationPluginMessage
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.ComponentBuilder
 import org.bukkit.Location
@@ -145,13 +147,9 @@ class BukkitPlugin: JavaPlugin {
         val x = location.blockX
         val y = location.blockY
         val z = location.blockZ
-        val output = ByteStreams.newDataOutput(world.length + 54)
-        output.writeUTF(IDENTIFIER_VALIDATE)
-        output.writeUUID(player.uniqueId)
-        output.writeUTF(world)
-        output.writeInt(x)
-        output.writeInt(y)
-        output.writeInt(z)
+
+        val output = ByteStreams.newDataOutput()
+        serialize(ValidationPluginMessage(player.uniqueId, world, x, y, z), output)
 
         val future = CompletableFuture<Boolean>()
         portalRequestMap[Pair(world, Triple(x, y, z))] = future
