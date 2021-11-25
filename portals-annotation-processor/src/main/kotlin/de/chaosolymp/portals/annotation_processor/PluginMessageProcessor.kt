@@ -27,7 +27,7 @@ class PluginMessageProcessor : AbstractProcessor() {
         }
 
         val file = File(generatedSourcesRoot).apply { mkdir() }
-        val fileBuilder = FileSpec.builder("de.chaosolymp.core.messages.generated", "PluginMessageGenerated")
+        val fileBuilder = FileSpec.builder("de.chaosolymp.portals.core.messages.generated", "PluginMessageGenerated")
 
         fileBuilder.addComment(
             """
@@ -83,7 +83,7 @@ class PluginMessageProcessor : AbstractProcessor() {
         val deserializeFuncBuilder = FunSpec.builder("deserialize")
             .addModifiers(KModifier.PUBLIC)
             .addParameter("input", ClassName("java.io", "DataInput"))
-            .returns(ClassName("de.chaosolymp.portals.core.messages", "AbstractPluginMessage"))
+            .returns(ClassName("de.chaosolymp.portals.core.messages", "AbstractPluginMessage").asNullable())
 
         deserializeFuncBuilder.addStatement("val identifier = input.readUTF()")
         for((i, element) in alreadyProcessedElements.withIndex()) {
@@ -94,7 +94,7 @@ class PluginMessageProcessor : AbstractProcessor() {
             if(i == 0) deserializeFuncBuilder.addStatement("if(identifier == %S) return deserialize$messageClassName(input)", annotationIdentifier)
             else deserializeFuncBuilder.addStatement("else if(identifier == %S) return deserialize$messageClassName(input)", annotationIdentifier)
 
-            if(i == alreadyProcessedElements.size - 1) deserializeFuncBuilder.addStatement("else throw IllegalArgumentException()")
+            if(i == alreadyProcessedElements.size - 1) deserializeFuncBuilder.addStatement("else return null")
         }
 
         fileBuilder.addFunction(serializeFuncBuilder.build())

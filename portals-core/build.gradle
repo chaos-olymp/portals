@@ -25,6 +25,15 @@ shadowJar {
     relocate('org.jetbrains.annotations', project.group + '.portals.core.libs.annotations.jetbrains')
 }
 
+sourceSets {
+    main {
+        java {
+            srcDir "${buildDir.absolutePath}/generated/source/kaptKotlin/"
+        }
+    }
+}
+
+
 artifacts {
     archives shadowJar
 }

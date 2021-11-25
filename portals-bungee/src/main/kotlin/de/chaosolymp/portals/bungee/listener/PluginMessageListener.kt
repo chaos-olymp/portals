@@ -1,10 +1,15 @@
 package de.chaosolymp.portals.bungee.listener
 
 import com.google.common.io.ByteStreams
+import de.chaosolymp.portals.core.messages.generated.deserialize
+import de.chaosolymp.portals.core.messages.generated.serialize
 import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.core.*
-import de.chaosolymp.portals.core.extensions.readUUID
-import de.chaosolymp.portals.core.extensions.writeUUID
+import de.chaosolymp.portals.core.messages.proxy_to_server.*
+import de.chaosolymp.portals.core.messages.server_to_proxy.AuthorizeTeleportRequestPluginMessage
+import de.chaosolymp.portals.core.messages.server_to_proxy.BlockChangeAcceptancePluginMessage
+import de.chaosolymp.portals.core.messages.server_to_proxy.LocationResponsePluginMessage
+import de.chaosolymp.portals.core.messages.server_to_proxy.ValidationPluginMessage
 import net.md_5.bungee.api.connection.ProxiedPlayer
 import net.md_5.bungee.api.event.PluginMessageEvent
 import net.md_5.bungee.api.plugin.Listener
@@ -18,36 +23,24 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
 
     private val blockChangeMap = mutableMapOf<UUID, CompletableFuture<Void>>()
 
-    @Suppress("UnstableApiUsage")
     @EventHandler
+    @Suppress("UnstableApiUsage")
     fun handlePluginMessage(event: PluginMessageEvent) {
-        if (event.tag == "BungeeCord" || event.tag == "bungeecord:main") {
-            val input = ByteStreams.newDataInput(event.data)
-            val subChannel = input.readUTF()
-            if (subChannel == IDENTIFIER_LOCATION) {
-                val uuid = input.readUUID()
-                val canCreatePortal = input.readBoolean()
-                val world = input.readUTF()
-                val x = input.readInt()
-                val y = input.readInt()
-                val z = input.readInt()
-
-                if (map.containsKey(uuid)) {
-                    map[uuid]?.complete(LocationResponse(canCreatePortal, world, x, y, z))
-                    map.remove(uuid)
+        if (!(event.tag == "BungeeCord" || event.tag == "bungeecord:main")) return
+        val input = ByteStreams.newDataInput(event.data)
+        when (val deserialized = deserialize(input)) {
+            is LocationResponsePluginMessage -> {
+                if (map.containsKey(deserialized.uuid)) {
+                    map[deserialized.uuid]?.complete(LocationResponse(deserialized.canCreatePortal, deserialized.world, deserialized.x, deserialized.y, deserialized.z))
+                    map.remove(deserialized.uuid)
                 } else {
-                    this.plugin.proxy.logger.warning("${event.sender.socketAddress} sent location request for non-requested uuid $uuid.")
+                    this.plugin.proxy.logger.warning("${event.sender.socketAddress} sent location request for non-requested uuid ${deserialized.uuid}.")
                 }
-            } else if (subChannel == IDENTIFIER_AUTHORIZE_TELEPORT) {
-                val uuid = input.readUUID()
-                val world = input.readUTF()
-                val x = input.readInt()
-                val y = input.readInt()
-                val z = input.readInt()
+            }
+            is AuthorizeTeleportRequestPluginMessage -> {
+                val server = this.plugin.proxy.getPlayer(deserialized.uuid).server.info.name
 
-                val server = this.plugin.proxy.getPlayer(uuid).server.info.name
-
-                val id = this.plugin.portalManager.getPortalIdAt(server, world, x, y, z)
+                val id = this.plugin.portalManager.getPortalIdAt(server, deserialized.world, deserialized.x, deserialized.y, deserialized.z)
                 if (id != null) {
                     val link = this.plugin.portalManager.getPortalLink(id)
                     plugin.logger.info("link = $link")
@@ -58,74 +51,53 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                     plugin.logger.info("serverInfo = $serverInfo")
                     if (portal?.server != server) {
                         plugin.logger.info("connecting")
-                        this.plugin.proxy.getPlayer(uuid).connect(serverInfo)
+                        this.plugin.proxy.getPlayer(deserialized.uuid).connect(serverInfo)
                     } else {
                         plugin.logger.info("Cannot connect, the player is on the same server")
                     }
 
-                    val out = ByteStreams.newDataOutput(48 + portal!!.world.length)
+                    val out = ByteStreams.newDataOutput()
 
-                    out.writeUTF(IDENTIFIER_AUTHORIZE_TELEPORT) // 4 byte + length
-                    out.writeUUID(uuid) // 16 byte
-                    out.writeUTF(portal.world) // 34 byte + portal.world.length
-                    out.writeInt(portal.x) // 4 byte
-                    out.writeInt(portal.y) // 4 byte
-                    out.writeInt(portal.z) // 4 byte
+                    val message = AuthorizeTeleportResponsePluginMessage(deserialized.uuid, portal!!.world, portal.x, portal.y, portal.z)
+                    serialize(message, out)
 
                     serverInfo.sendData("BungeeCord", out.toByteArray())
                     plugin.logger.info("Sent plugin message")
                     if (portal.server != server) {
-                        this.plugin.proxy.getPlayer(uuid).connect(serverInfo)
+                        this.plugin.proxy.getPlayer(deserialized.uuid).connect(serverInfo)
                     }
                 } else {
                     this.plugin.logger.warning("${event.sender.socketAddress}: caught invalid teleportation")
                 }
-            } else if (subChannel == IDENTIFIER_BLOCK_CHANGE_ACCEPTED) {
-                val uuidArray = ByteArray(16)
-                input.readFully(uuidArray)
-                val uuid = UUIDUtils.getUUIDFromBytes(uuidArray)
-                if (blockChangeMap.containsKey(uuid)) {
-                    blockChangeMap[uuid]?.complete(null)
-                    blockChangeMap.remove(uuid)
+            }
+            is BlockChangeAcceptancePluginMessage -> {
+                if (blockChangeMap.containsKey(deserialized.uuid)) {
+                    blockChangeMap[deserialized.uuid]?.complete(null)
+                    blockChangeMap.remove(deserialized.uuid)
                 } else {
-                    this.plugin.proxy.logger.warning("${event.sender.socketAddress} sent block change response for non-requested uuid $uuid.")
+                    this.plugin.proxy.logger.warning("${event.sender.socketAddress} sent block change response for non-requested uuid ${deserialized.uuid}.")
                 }
-            } else if(subChannel == IDENTIFIER_VALIDATE) {
-                val uuidBuffer = ByteArray(16)
-                input.readFully(uuidBuffer)
-                val uuid = UUIDUtils.getUUIDFromBytes(uuidBuffer)
+            }
+            is ValidationPluginMessage -> {
+                val serverInfo = this.plugin.proxy.getPlayer(deserialized.uuid).server.info
 
-                val worldName = input.readUTF()
-                val x = input.readInt()
-                val y = input.readInt()
-                val z = input.readInt()
+                val valid = plugin.portalManager.getPortalIdAt(serverInfo.name, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z) != null
+                val message = ValidationResponsePluginMessage(deserialized.uuid, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z, valid)
 
-                val serverInfo = this.plugin.proxy.getPlayer(uuid).server.info
-
-                val valid = plugin.portalManager.getPortalIdAt(serverInfo.name, worldName, x, y, z) != null
-
-                val out = ByteStreams.newDataOutput(49 + worldName.length)
-
-                out.writeUTF(IDENTIFIER_VALIDATE_RESPONSE) // 4 byte + length
-                out.write(uuidBuffer) // 16 byte
-                out.writeUTF(worldName) // 34 byte + portal.world.length
-                out.writeInt(x) // 4 byte
-                out.writeInt(y) // 4 byte
-                out.writeInt(z) // 4 byte
-                out.writeBoolean(valid) // 1 byte
-
+                val out = ByteStreams.newDataOutput()
+                serialize(message, out)
                 serverInfo.sendData("BungeeCord", out.toByteArray())
             }
+            else -> {}
         }
     }
 
     @Suppress("UnstableApiUsage")
     fun requestLocation(player: ProxiedPlayer, future: CompletableFuture<LocationResponse>) {
         map[player.uniqueId] = future
-        val output = ByteStreams.newDataOutput(36)
 
-        output.writeUTF(IDENTIFIER_LOCATION) // 4 byte + length
-        output.write(UUIDUtils.getBytesFromUUID(player.uniqueId)) // 16 byte
+        val output = ByteStreams.newDataOutput()
+        serialize(RequestLocationPluginMessage(player.uniqueId), output)
 
         player.server.sendData("BungeeCord", output.toByteArray())
     }
@@ -133,23 +105,18 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
     @Suppress("UnstableApiUsage")
     fun sendBlockChange(player: ProxiedPlayer, future: CompletableFuture<Void>) {
         blockChangeMap[player.uniqueId] = future
-        val output = ByteStreams.newDataOutput(36)
 
-        output.writeUTF(IDENTIFIER_BLOCK_CHANGE) // 4 byte + length
-        output.write(UUIDUtils.getBytesFromUUID(player.uniqueId)) // 16 byte
+        val output = ByteStreams.newDataOutput()
+        serialize(BlockChangeRequestPluginMessage(player.uniqueId), output)
 
         player.server.sendData("BungeeCord", output.toByteArray())
     }
 
     @Suppress("UnstableApiUsage")
     fun sendBlockDestroy(server: String, world: String, x: Int, y: Int, z: Int) {
-        val output = ByteStreams.newDataOutput(20 + IDENTIFIER_BLOCK_DESTROY.length + world.length)
 
-        output.writeUTF(IDENTIFIER_BLOCK_DESTROY) // 4 byte + length
-        output.writeUTF(world) // 4 byte + length
-        output.writeInt(x) // 4 byte
-        output.writeInt(y) // 4 byte
-        output.writeInt(z) // 4 byte
+        val output = ByteStreams.newDataOutput()
+        serialize(BlockDestroyRequestPluginMessage(world, x, y, z), output)
 
         plugin.proxy.servers[server]!!.sendData("BungeeCord", output.toByteArray())
     }
