@@ -50,6 +50,10 @@ class BukkitPlugin: JavaPlugin {
         this.initConfig()
         this.server.pluginManager.registerEvents(PortalListener(this),this)
 
+        val exceptionHandler = ExceptionHandler(this)
+        Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
+        this.logger.info("Initialized global exception handler")
+
         if (RuntimeStatics.TEST_ENVIRONMENT) {
             this.logger.info("Skipping plugin channel listener registration because we're in TEST_ENVIRONMENT")
         } else {
