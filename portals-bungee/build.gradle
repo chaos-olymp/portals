@@ -20,11 +20,11 @@ dependencies {
 shadowJar {
     project.configurations.implementation.canBeResolved = true
     configurations = [project.configurations.implementation]
-    relocate('kotlin', project.group + '.portals.core.libs.kotlin')
-    relocate('org.intellij.lang.annotations', project.group + '.portals.core.libs.annotations.intellij')
-    relocate('org.jetbrains.annotations', project.group + '.portals.core.libs.annotations.jetbrains')
-    relocate('com.zaxxer.hikari', project.group + '.portals.bungee.libs.hikari')
-    relocate('org.slf4j', project.group + '.portals.bungee.libs.slf4j')
+    relocate('kotlin' as String, project.group + '.portals.bungee.libs.kotlin' as String)
+    relocate('org.intellij.lang.annotations' as String, project.group + '.portals.bungee.libs.annotations.intellij' as String)
+    relocate('org.jetbrains.annotations' as String, project.group + '.portals.bungee.libs.annotations.jetbrains' as String)
+    relocate('com.zaxxer.hikari' as String, project.group + '.portals.bungee.libs.hikari' as String)
+    relocate('org.slf4j' as String, project.group + '.portals.bungee.libs.slf4j' as String)
 }
 
 artifacts {

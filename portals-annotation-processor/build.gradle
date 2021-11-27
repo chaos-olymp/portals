@@ -15,7 +15,6 @@ dependencies {
     implementation project(":portals-annotations")
 
     implementation 'com.squareup:kotlinpoet:0.7.0'
-
     implementation 'com.google.auto.service:auto-service:1.0.1'
     kapt "com.google.auto.service:auto-service:1.0-rc4"
 }
@@ -23,6 +22,17 @@ dependencies {
 shadowJar {
     project.configurations.implementation.canBeResolved = true
     configurations = [project.configurations.implementation]
+    relocate('kotlin' as String, project.group + '.portals.annotations.libs.kotlin' as String)
+    relocate('org.intellij.lang.annotations' as String, project.group + '.portals.annotations.libs.annotations.intellij' as String)
+    relocate('org.jetbrains.annotations' as String, project.group + '.portals.annotations.libs.annotations.jetbrains' as String)
+    relocate('org.checkerframework' as String, project.group + '.portals.annotations.libs.checkerframework' as String)
+    relocate('com.squareup.kotlinpoet' as String, project.group + '.portals.annotations.libs.kotlinpoet' as String)
+    relocate('com.google.auto' as String, project.group + '.portals.annotations.libs.google_auto' as String)
+    relocate('com.google.common' as String, project.group + '.portals.annotations.libs.google_common' as String)
+    relocate('com.google.errorprone' as String, project.group + '.portals.annotations.libs.errorprone' as String)
+    relocate('com.google.j2objc' as String, project.group + '.portals.annotations.libs.j2objc' as String)
+    relocate('com.google.thirdparty as String', project.group + '.portals.annotations.libs.thirdparty' as String)
+    relocate('javax.annotation' as String, project.group + '.portals.annotations.libs.javax_annotations' as String)
 }
 
 artifacts {
