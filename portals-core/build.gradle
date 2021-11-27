@@ -16,7 +16,7 @@ dependencies {
     compileOnly project(":portals-annotations")
     kapt project(":portals-annotation-processor")
 
-    testImplementation 'org.jetbrains.kotlin:kotlin-test:1.5.31'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test:1.6.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testImplementation 'com.google.guava:guava:31.0.1-jre'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
