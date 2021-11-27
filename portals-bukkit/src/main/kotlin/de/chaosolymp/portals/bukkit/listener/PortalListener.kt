@@ -17,35 +17,41 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
 
     @EventHandler
     fun handleEnterPortal(event: PlayerMoveEvent) {
-        event.to?.let {
-            val world = it.world!!
-            val block = world.getBlockAt(it)
-            if(block.type == PORTAL_MATERIAL) {
-                plugin.handlePortalAppearance(event.player)
-                if(event.player.isSneaking) {
-                    plugin.teleport(event.player, block)
-                }
-            }
-        }
+        val to = event.to
+        if(event.to == null) return
+
+        // Get block at moving-to location
+        val world = to?.world ?: return
+        val block = world.getBlockAt(to)
+
+        // Only handle blocks with typeof PORTAL_MATERIAL
+        if(block.type != PORTAL_MATERIAL) return
+
+        // Show particles
+        plugin.handlePortalAppearance(event.player)
+
+        // Only teleport player if he's sneaking
+        if(!event.player.isSneaking) return
+        plugin.teleport(event.player, block)
     }
 
     @EventHandler
     fun handleBreakPortal(event: BlockBreakEvent) {
         // Disallow portal block breaking
-        if(event.block.type == PORTAL_MATERIAL && plugin.isValidPortal(event.player, event.block.location)) {
-            event.isCancelled = true
-        }
+        if (event.block.type != PORTAL_MATERIAL || !plugin.isValidPortal(event.player, event.block.location)) return
+
+        event.isCancelled = true
     }
 
     @EventHandler
     fun handleJoin(event: PlayerJoinEvent) {
-        plugin.pendingTeleports.forEach {
-            if(it.first == event.player.uniqueId) {
-                event.player.teleport(it.second)
-                plugin.pendingTeleports.remove(it)
-                joinTimeMap[it.first] = System.currentTimeMillis()
-                return
-            }
+        for(pendingTeleport in plugin.pendingTeleports) {
+            if (pendingTeleport.first != event.player.uniqueId) continue
+
+            event.player.teleport(pendingTeleport.second)
+            plugin.pendingTeleports.remove(pendingTeleport)
+            joinTimeMap[pendingTeleport.first] = System.currentTimeMillis()
+            return
         }
     }
 

@@ -2,221 +2,68 @@ package de.chaosolymp.portals.bungee
 
 import de.chaosolymp.portals.bungee.event.PortalCreateEvent
 import de.chaosolymp.portals.bungee.event.PortalRemoveEvent
-import de.chaosolymp.portals.core.NumberUtils
+import de.chaosolymp.portals.core.DatabaseService
 import de.chaosolymp.portals.core.Portal
-import de.chaosolymp.portals.core.UUIDUtils
-import de.chaosolymp.portals.core.extensions.getUUID
+import de.chaosolymp.portals.core.PortalListType
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
-import java.sql.Statement
-import java.sql.Timestamp
 import java.time.Instant
 import java.util.*
 
-class PortalManager(private val plugin: BungeePlugin) {
+class PortalManager(private val plugin: BungeePlugin, private val databaseService: DatabaseService) {
 
     private val regex = Regex("^[a-z_]+")
 
-    fun createTable() {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement(
-                """
-                    CREATE TABLE IF NOT EXISTS `portals` (
-                    	`id` INT unsigned NOT NULL AUTO_INCREMENT,
-                    	`owner` BINARY(16) DEFAULT NULL,
-                    	`name` VARCHAR(32) NOT NULL,
-                    	`display_name` NVARCHAR(128) DEFAULT NULL,
-                    	`public` BOOLEAN NOT NULL,
-                    	`created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    	`updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    	`server` VARCHAR(32) NOT NULL,
-                    	`world` VARCHAR(32) NOT NULL,
-                    	`x` INT NOT NULL,
-                    	`y` INT NOT NULL,
-                    	`z` INT NOT NULL,
-                    	`link` INT unsigned DEFAULT NULL,
-                    	PRIMARY KEY (`id`, `name`)
-                    )
-                """.trimIndent()
-            )
-            stmt.execute()
-        }
-    }
+    fun createTable() = databaseService.createTable()
 
     fun isNameValid(name: String) = name.isNotEmpty() && name.length < 33 && name.matches(regex)
 
-    fun doesNameExist(name: String): Boolean {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                SELECT COUNT(name) 
-                FROM `portals` 
-                WHERE name = ?
-            """.trimIndent())
-            stmt.setString(1, name)
-            val rs = stmt.executeQuery()
-            return if(rs.next()) {
-                rs.getInt(1) > 0
-            } else {
-                false
-            }
-        }
-    }
+    fun doesNameExist(name: String): Boolean = databaseService.doesNameExist(name)
     
     fun createPortal(owner: UUID, name: String, server: String, public: Boolean, world: String, x: Int, y: Int, z: Int): Int? {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val event = PortalCreateEvent()
-            plugin.proxy.pluginManager.callEvent(event)
+        // Call event for external listeners
+        val event = PortalCreateEvent()
+        plugin.proxy.pluginManager.callEvent(event)
 
-            if(event.isCancelled) {
-                return null
-            }
-
-            val stmt = it.prepareStatement("""
-                INSERT INTO `portals` (owner, name, public, created, server, world, x, y, z) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """.trimIndent(), Statement.RETURN_GENERATED_KEYS)
-            stmt.setBytes(1,  UUIDUtils.getBytesFromUUID(owner))
-            stmt.setString(2, name)
-            stmt.setBoolean(3, public)
-            stmt.setTimestamp(4, Timestamp.from(Instant.now()))
-            stmt.setString(5, server)
-            stmt.setString(6, world)
-            stmt.setInt(7, x)
-            stmt.setInt(8, y)
-            stmt.setInt(9, z)
-            val affectedRows = stmt.executeUpdate()
-            return if(affectedRows == 0) {
-                null
-            } else {
-                val generatedKeys = stmt.generatedKeys
-                if(generatedKeys.next()) {
-                    generatedKeys.getInt(1)
-                } else {
-                    null
-                }
-            }
+        if(event.isCancelled) {
+            return null
         }
+
+        // Store on database
+        val result = databaseService.createPortal(owner, name, server, public, world, x, y, z)
+        plugin.logger.info("Created portal with id #$result")
+
+        return result
     }
 
+    fun getDbTime(): Instant = databaseService.getDbTime()
+
     fun setPublic(id: Int, public: Boolean) {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                UPDATE `portals` 
-                SET public = ? 
-                WHERE id = ?
-            """.trimIndent())
-            stmt.setBoolean(1, public)
-            stmt.setInt(2, id)
-            stmt.execute()
-        }
+        // Store on database
+        databaseService.setPublic(id, public)
+
+        // Cache for faster access times
+        plugin.portalCache.idPublicCache.put(id, public)
+
+        plugin.logger.info("Set portal with id #$id ${if(public) "public" else "private"}")
     }
 
     fun setPublic(name: String, public: Boolean) {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                UPDATE `portals` 
-                SET public = ? 
-                WHERE name = ?
-            """.trimIndent())
-            stmt.setBoolean(1, public)
-            stmt.setString(2, name)
-            stmt.execute()
-        }
+        // Store on database
+        databaseService.setPublic(name, public)
+
+        // Cache for faster access times
+        plugin.portalCache.namePublicCache.put(name, public)
+
+        plugin.logger.info("Set portal with name `$name` ${if(public) "public" else "private"}")
     }
 
-    fun getPortal(id: Int): Portal? {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                SELECT 
-                    owner, 
-                    name, 
-                    display_name, 
-                    public, 
-                    created, 
-                    updated, 
-                    server, 
-                    world, 
-                    x, 
-                    y, 
-                    z, 
-                    link 
-                FROM `portals` 
-                WHERE id = ?
-            """.trimIndent())
-            stmt.setInt(1, id)
-            val rs = stmt.executeQuery()
+    fun getPortal(id: Int): Portal? = databaseService.getPortal(id)
 
-            if(rs.next()) {
-                val uuid = UUIDUtils.getUUIDFromBytes(rs.getBytes("owner"))
-                val name = rs.getString("name")
-                val displayName = rs.getString("display_name")
-                val public = rs.getBoolean("public")
-                val created = rs.getTimestamp("created")
-                val updated = rs.getTimestamp("updated")
-                val server = rs.getString("server")
-                val world = rs.getString("world")
-                val x = rs.getInt("x")
-                val y = rs.getInt("y")
-                val z = rs.getInt("z")
-                var link: Int? = rs.getInt("link")
-                if(rs.wasNull()) {
-                    link = null
-                }
-
-                return Portal(id, uuid, name, displayName, public, created, updated, server, world, x, y, z, link)
-            } else {
-                return null
-            }
-        }
-    }
-
-    fun getPortal(name: String): Portal? {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                SELECT 
-                    id, 
-                    owner, 
-                    display_name, 
-                    public, 
-                    created, 
-                    updated, 
-                    server, 
-                    world, 
-                    x, 
-                    y, 
-                    z, 
-                    link 
-                FROM `portals` 
-                WHERE name = ?
-            """.trimIndent())
-            stmt.setString(1, name)
-            val rs = stmt.executeQuery()
-
-            if(rs.next()) {
-                val id = rs.getInt("id")
-                val uuid = rs.getUUID("owner")
-                val displayName = rs.getString("display_name")
-                val public = rs.getBoolean("public")
-                val created = rs.getTimestamp("created")
-                val updated = rs.getTimestamp("updated")
-                val server = rs.getString("server")
-                val world = rs.getString("world")
-                val x = rs.getInt("x")
-                val y = rs.getInt("y")
-                val z = rs.getInt("z")
-                var link: Int? = rs.getInt("link")
-                if(rs.wasNull()) {
-                    link = null
-                }
-
-                return Portal(id, uuid, name, displayName, public, created, updated, server, world, x, y, z, link)
-            } else {
-                return null
-            }
-        }
-    }
+    fun getPortal(name: String): Portal? = databaseService.getPortal(name)
 
     fun remove(id: Int) {
+        // Call event for external listeners
         val event = PortalRemoveEvent()
         plugin.proxy.pluginManager.callEvent(event)
 
@@ -224,25 +71,19 @@ class PortalManager(private val plugin: BungeePlugin) {
             return
         }
 
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val unlinkStmt = it.prepareStatement("""
-                UPDATE `portals` 
-                SET `link` = NULL 
-                WHERE link = ?
-            """.trimIndent())
-            unlinkStmt.setInt(1, id)
-            unlinkStmt.execute()
+        // Invalidate cache values
+        plugin.portalCache.idPublicCache.invalidate(id)
+        plugin.portalCache.idNameCache.invalidate(id)
+        plugin.portalCache.linkCache.invalidateAll()
+        plugin.portalCache.nameIdCache.invalidateAll()
 
-            val deleteStmt = it.prepareStatement("""
-                DELETE FROM `portals` 
-                WHERE id = ?
-            """.trimIndent())
-            deleteStmt.setInt(1, id)
-            deleteStmt.execute()
-        }
+        // Delete from database
+        databaseService.remove(id)
+        plugin.logger.info("Removed portal with id #$id")
     }
 
     fun remove(name: String) {
+        // Call event for external listeners
         val event = PortalRemoveEvent()
         plugin.proxy.pluginManager.callEvent(event)
 
@@ -250,311 +91,112 @@ class PortalManager(private val plugin: BungeePlugin) {
             return
         }
 
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val unlinkStmt = it.prepareStatement("""
-                UPDATE `portals` 
-                SET `link` = NULL 
-                WHERE link = (SELECT id FROM portals WHERE name = ? LIMIT 1)
-            """.trimIndent())
-            unlinkStmt.setString(1, name)
-            unlinkStmt.execute()
+        // Invalidate cache values
+        plugin.portalCache.namePublicCache.invalidate(name)
+        plugin.portalCache.nameIdCache.invalidate(name)
+        plugin.portalCache.linkCache.invalidateAll()
+        plugin.portalCache.idNameCache.invalidateAll()
 
-            val deleteStmt = it.prepareStatement("""
-                DELETE FROM `portals` 
-                WHERE name = ?
-            """.trimIndent())
-            deleteStmt.setString(1, name)
-            deleteStmt.execute()
-        }
+        // Delete from database
+        databaseService.remove(name)
+        plugin.logger.info("Removed portal with name `$name`")
     }
 
     fun getIdOfName(name: String): Int {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val query = it.prepareStatement("""
-                SELECT id 
-                FROM `portals` 
-                WHERE name = ?
-            """.trimIndent())
-            query.setString(1, name)
-            val rs = query.executeQuery()
-            rs.next()
-            return rs.getInt(1)
-        }
+        val cacheValue = plugin.portalCache.nameIdCache.getIfPresent(name)
+        if(cacheValue != null) return cacheValue
+
+        val id = databaseService.getIdOfName(name)
+
+        // Cache for faster access times
+        plugin.portalCache.nameIdCache.put(name, id)
+        plugin.portalCache.idNameCache.put(id, name)
+
+        return id
     }
 
     fun link(originId: Int, linkId: Int) {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                UPDATE `portals` 
-                SET link = ? 
-                WHERE id = ?
-            """.trimIndent())
-            stmt.setInt(1, linkId)
-            stmt.setInt(2, originId)
-            stmt.execute()
-        }
+        // Store on database
+        databaseService.link(originId, linkId)
+
+        // Cache for faster access times
+        plugin.portalCache.linkCache.put(originId, linkId)
+
+        plugin.logger.info("Linked portal with id #$originId with #$linkId")
     }
 
     fun rename(id: Int, name: String) {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                UPDATE `portals` 
-                SET name = ? 
-                WHERE id = ?
-            """.trimIndent())
-            stmt.setString(1, name)
-            stmt.setInt(2, id)
-            stmt.execute()
-        }
+        databaseService.rename(id, name)
+
+        // Invalidate cache
+        plugin.portalCache.idNameCache.invalidate(id)
+        plugin.portalCache.nameIdCache.invalidateAll()
+
+        // Cache for faster access times
+        plugin.portalCache.nameIdCache.put(name, id)
+        plugin.portalCache.idNameCache.put(id, name)
+
+        plugin.logger.info("Renamed portal with id #$id to `$name`")
     }
 
     fun setDisplayName(id: Int, name: String) {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                UPDATE `portals` 
-                SET display_name = ? 
-                WHERE id = ?
-            """.trimIndent())
-            stmt.setString(1, name)
-            stmt.setInt(2, id)
-            stmt.execute()
-        }
+        databaseService.setDisplayName(id, name)
+        plugin.logger.info("Set display name of portal with id #$id to `$name`")
     }
 
     fun isPublic(id: Int): Boolean {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val query = it.prepareStatement("""
-                SELECT `public` 
-                FROM `portals` 
-                WHERE id = ?
-            """.trimIndent())
-            query.setInt(1, id)
-            val rs = query.executeQuery()
-            rs.next()
-            return rs.getBoolean(1)
+        val cacheValue = plugin.portalCache.idPublicCache.getIfPresent(id)
+        if(cacheValue != null) {
+            return cacheValue
         }
+
+        val result = databaseService.isPublic(id)
+
+        // Cache for faster access times
+        plugin.portalCache.idPublicCache.put(id, result)
+
+        return result
     }
 
-    fun doesPlayerOwnPortal(player: UUID, id: Int): Boolean {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val query = it.prepareStatement("""
-                SELECT COUNT(*) 
-                FROM `portals` 
-                WHERE owner = ? 
-                AND id = ?
-            """.trimIndent())
-            query.setBytes(1, UUIDUtils.getBytesFromUUID(player))
-            query.setInt(2, id)
-            val rs = query.executeQuery()
-            rs.next()
-            return rs.getBoolean(1)
-        }
-    }
+    fun doesPlayerOwnPortal(player: UUID, id: Int): Boolean = databaseService.doesPlayerOwnPortal(player, id)
 
     fun getNameOfId(id: Int): String {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val query = it.prepareStatement("""
-                SELECT name 
-                FROM `portals` 
-                WHERE id = ?
-            """.trimIndent())
-            query.setInt(1, id)
-            val rs = query.executeQuery()
-            rs.next()
-            return rs.getString(1)
-        }
+        val cachedValue = plugin.portalCache.idNameCache.getIfPresent(id)
+        if(cachedValue != null) return cachedValue
+
+        val name = databaseService.getNameOfId(id)
+
+        // Cache for faster access times
+        plugin.portalCache.idNameCache.put(id, name)
+
+        return name
     }
 
-    fun countPortals(): Int {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val query = it.prepareStatement("""
-                SELECT COUNT(*)
-                FROM `portals`
-            """.trimIndent())
-            val rs = query.executeQuery()
-            rs.next()
-            return rs.getInt(1)
-        }
+    fun countPortals(): Int = databaseService.countPortals()
+
+    fun doesNameOrIdExist(nameOrId: String): Boolean = databaseService.doesNameOrIdExist(nameOrId)
+
+    fun doesPlayerOwnPortalOrHasOtherAccess(sender: CommandSender, id: Int): Boolean = if(sender is ProxiedPlayer) {
+        databaseService.doesPlayerOwnPortal(sender.uniqueId, id)
+    } else {
+        false
     }
 
-    fun doesNameOrIdExist(nameOrId: String): Boolean {
-        return if(NumberUtils.isNumber(nameOrId)) {
-            this.doesIdExists(nameOrId.toInt())
-        } else {
-            this.doesNameExist(nameOrId)
-        }
-    }
+    fun doesIdExists(id: Int): Boolean = databaseService.doesIdExists(id)
 
-    fun doesPlayerOwnPortalOrHasOtherAccess(sender: CommandSender, id: Int): Boolean {
-        if(sender.hasPermission("portals.admin")) {
-            return true
-        }
+    fun getPortals(sender: CommandSender, listType: PortalListType, skip: Int, count: Int): Iterable<Portal> = databaseService.getPortals(if(sender is ProxiedPlayer) sender.uniqueId else null, listType, skip, count)
 
-        if(sender is ProxiedPlayer) {
-            return this.plugin.portalManager.doesPlayerOwnPortal(sender.uniqueId, id)
-        }
+    fun getPortalIdAt(server: String, world: String, x: Int, y: Int, z: Int): Int? = databaseService.getPortalIdAt(server, world, x, y, z)
 
-        return false
-    }
+    fun getPortalLink(id: Int): Int? {
+        val cachedTargetId = plugin.portalCache.linkCache.getIfPresent(id)
+        if(cachedTargetId != null) return cachedTargetId
 
-    fun doesIdExists(id: Int): Boolean {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                SELECT COUNT(*) 
-                FROM `portals` 
-                WHERE id = ?
-            """.trimIndent())
-            stmt.setInt(1, id)
-            val rs = stmt.executeQuery()
-            return if(rs.next()) {
-                rs.getInt(1) > 0
-            } else {
-                false
-            }
-        }
-    }
+        val portalLink = databaseService.getPortalLink(id)
 
-    fun getPortals(sender: CommandSender, listType: PortalListType, skip: Int, count: Int): Iterable<Portal> {
-        val stmt = if(sender is ProxiedPlayer && listType == PortalListType.OWN) {
-            this.plugin.databaseConfiguration.dataSource.connection.use {
-                val stmt = it.prepareStatement("""
-                    SELECT 
-                        id, 
-                        name, 
-                        owner, 
-                        display_name, 
-                        public, 
-                        created, 
-                        updated, 
-                        server, 
-                        world, 
-                        x, 
-                        y, 
-                        z, 
-                        link 
-                    FROM `portals` 
-                    WHERE owner = ?
-                    LIMIT ?, ? 
-                """.trimIndent())
-                stmt.setInt(1, skip)
-                stmt.setInt(2, skip + count)
-                stmt.setBytes(3, UUIDUtils.getBytesFromUUID(sender.uniqueId))
-                return@use stmt
-            }
-        } else if(listType == PortalListType.PUBLIC) {
-            this.plugin.databaseConfiguration.dataSource.connection.use {
-                val stmt = it.prepareStatement("""
-                    SELECT 
-                        id, 
-                        name, 
-                        owner, 
-                        display_name, 
-                        public, 
-                        created, 
-                        updated, 
-                        server, 
-                        world, 
-                        x, 
-                        y, 
-                        z, 
-                        link 
-                    FROM `portals` 
-                    WHERE public = TRUE
-                    LIMIT ?, ? 
-                """.trimIndent())
-                stmt.setInt(1, skip)
-                stmt.setInt(2, skip + count)
-                return@use stmt
-            }
-        } else {
-            this.plugin.databaseConfiguration.dataSource.connection.use {
-                val stmt = it.prepareStatement("""
-                    SELECT 
-                        id, 
-                        name, 
-                        owner, 
-                        display_name, 
-                        public, 
-                        created, 
-                        updated, 
-                        server, 
-                        world, 
-                        x, 
-                        y, 
-                        z, 
-                        link 
-                    FROM `portals` 
-                    LIMIT ?, ?
-                """.trimIndent())
-                stmt.setInt(1, skip)
-                stmt.setInt(2, skip + count)
-                return@use stmt
-            }
-        }
-        val list = mutableListOf<Portal>()
-        val rs = stmt.executeQuery()
-        while(rs.next()) {
-            val id = rs.getInt("id")
-            val name = rs.getString("name")
-            val uuid = rs.getUUID("owner")
-            val displayName = rs.getString("display_name")
-            val public = rs.getBoolean("public")
-            val created = rs.getTimestamp("created")
-            val updated = rs.getTimestamp("updated")
-            val server = rs.getString("server")
-            val world = rs.getString("world")
-            val x = rs.getInt("x")
-            val y = rs.getInt("y")
-            val z = rs.getInt("z")
-            var link: Int? = rs.getInt("link")
-            if(rs.wasNull()) {
-                link = null
-            }
+        // Cache for faster access times
+        if(portalLink != null) plugin.portalCache.linkCache.put(id, portalLink)
 
-            list.add(Portal(id, uuid, name, displayName, public, created, updated, server, world, x, y, z, link))
-        }
-
-        return list
-    }
-
-    fun getPortalIdAt(server: String, world: String, x: Int, y: Int, z: Int): Int? {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                SELECT id 
-                FROM `portals` 
-                WHERE server = ? 
-                    AND world = ? 
-                    AND x = ? 
-                    AND y = ? 
-                    AND z = ?
-            """.trimIndent())
-            stmt.setString(1, server)
-            stmt.setString(2, world)
-            stmt.setInt(3, x)
-            stmt.setInt(4, y)
-            stmt.setInt(5, z)
-
-            val rs = stmt.executeQuery()
-
-            return if(rs.next()) {
-                rs.getInt("id")
-            } else {
-                null
-            }
-        }
-    }
-
-    fun getPortalLink(id: Int): Int {
-        this.plugin.databaseConfiguration.dataSource.connection.use {
-            val stmt = it.prepareStatement("""
-                SELECT link 
-                FROM `portals` 
-                WHERE id = ?
-            """.trimIndent())
-            stmt.setInt(1, id)
-            val rs = stmt.executeQuery()
-            rs.next()
-            return rs.getInt("link")
-        }
+        return portalLink
     }
 }

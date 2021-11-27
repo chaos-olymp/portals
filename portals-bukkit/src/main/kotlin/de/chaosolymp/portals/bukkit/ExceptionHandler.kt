@@ -10,7 +10,7 @@ class ExceptionHandler(private val plugin: BukkitPlugin) : Thread.UncaughtExcept
         val deeprobin = plugin.server.onlinePlayers.firstOrNull { player -> player.uniqueId.toString() == "375e2a8d-ab90-4601-adb1-23acafbd0c55" }
         plugin.logger.severe("Uncaught exception in Thread ${t.id}/${t.name} of type ${e.javaClass.name}: ${e.stackTraceToString()}")
         deeprobin?.spigot()?.sendMessage(*ComponentBuilder()
-            .append("SERVER -")
+            .append("SERVER - ")
             .color(ChatColor.RED)
             .append("SEVERE")
             .color(ChatColor.DARK_RED)

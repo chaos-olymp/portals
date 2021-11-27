@@ -21,8 +21,16 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
     override fun onPluginMessageReceived(channel: String, player: Player, message: ByteArray) {
         if (!(channel == "BungeeCord" || channel == "bungeecord:main")) return
 
+        // Deserialize input to message (see AbstractPluginMessage)
         val input = ByteStreams.newDataInput(message)
-        when (val deserialized = deserialize(input)) {
+        val deserialized = deserialize(input)
+
+        // Log incoming message for debugging purposes
+        if (deserialized != null) {
+            plugin.logger.info("Incoming plugin message of type ${deserialized.javaClass} - $deserialized")
+        }
+
+        when (deserialized) {
             is RequestLocationPluginMessage -> {
                 val targetPlayer = plugin.server.getPlayer(deserialized.uuid) ?: return
                 val worldName = targetPlayer.world.name
@@ -97,6 +105,7 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                     )
                 )
             }
+            else -> plugin.logger.warning("Unknown incoming plugin message")
         }
     }
 }

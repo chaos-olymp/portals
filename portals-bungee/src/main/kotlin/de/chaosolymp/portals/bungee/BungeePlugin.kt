@@ -1,9 +1,13 @@
 package de.chaosolymp.portals.bungee
 
+import com.google.gson.Gson
 import de.chaosolymp.portals.bungee.command.PortalCommand
+import de.chaosolymp.portals.bungee.config.CacheConfiguration
 import de.chaosolymp.portals.bungee.config.DatabaseConfiguration
 import de.chaosolymp.portals.bungee.config.MessageConfiguration
 import de.chaosolymp.portals.bungee.listener.PluginMessageListener
+import de.chaosolymp.portals.core.DatabaseService
+import de.chaosolymp.portals.core.infrastructure.HikariDatabaseProvider
 import net.md_5.bungee.api.plugin.Plugin
 import net.md_5.bungee.config.Configuration
 import net.md_5.bungee.config.ConfigurationProvider
@@ -14,39 +18,46 @@ class BungeePlugin: Plugin() {
 
     lateinit var portalManager: PortalManager
     lateinit var messageConfiguration: MessageConfiguration
-    lateinit var databaseConfiguration: DatabaseConfiguration
     lateinit var pluginMessageListener: PluginMessageListener
 
+    internal lateinit var portalCache: PortalCache
     internal lateinit var exceptionHandler: ExceptionHandler
+    internal lateinit var databaseConfiguration: DatabaseConfiguration
+    internal lateinit var cachingConfiguration: CacheConfiguration
+    private lateinit var databaseService: DatabaseService
 
     override fun onEnable() {
         val startTime = System.currentTimeMillis()
 
-        if(!this.dataFolder.exists()) {
-            this.dataFolder.mkdir()
-            this.logger.info("Created plugin data folder ${dataFolder.name}")
+        if(!dataFolder.exists()) {
+            dataFolder.mkdir()
+            logger.info("Created plugin data folder ${dataFolder.name}")
         }
 
-        this.initializeMessageConfig()
-        this.initializeDatabaseConfig()
+        initializeMessageConfig()
+        initializeDatabaseConfig()
+        initializeCachingConfig()
 
         exceptionHandler = ExceptionHandler(this)
         Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
-        this.logger.info("Initialized global exception handler")
+        logger.info("Initialized global exception handler")
 
-        this.portalManager = PortalManager(this)
-        this.logger.info("Initialized portal manager")
+        portalCache = PortalCache(this)
+        logger.info("Initialized cache")
 
-        this.portalManager.createTable()
+        portalManager = PortalManager(this, databaseService)
+        logger.info("Initialized portal manager")
 
-        this.pluginMessageListener = PluginMessageListener(this)
-        this.proxy.pluginManager.registerListener(this, this.pluginMessageListener)
-        this.logger.info("Registered plugin message listener")
+        portalManager.createTable()
 
-        this.proxy.pluginManager.registerCommand(this, PortalCommand(this))
-        this.logger.info("Registered portal command")
+        pluginMessageListener = PluginMessageListener(this)
+        proxy.pluginManager.registerListener(this, this.pluginMessageListener)
+        logger.info("Registered plugin message listener")
 
-        this.logger.info("Plugin warmup finished (Took ${System.currentTimeMillis() - startTime}ms).")
+        proxy.pluginManager.registerCommand(this, PortalCommand(this))
+        logger.info("Registered portal command")
+
+        logger.info("Plugin warmup finished (Took ${System.currentTimeMillis() - startTime}ms).")
     }
 
     private fun initializeMessageConfig() {
@@ -54,26 +65,41 @@ class BungeePlugin: Plugin() {
         val file = File(this.dataFolder, "messages.yml")
         if(file.exists()) {
             val yamlConfig = provider.load(file)
-            this.messageConfiguration = MessageConfiguration(yamlConfig)
-            this.logger.info("Loaded configuration file ${file.name}")
+            messageConfiguration = MessageConfiguration(yamlConfig)
+            logger.info("Loaded configuration file ${file.name}")
         } else {
             if(file.createNewFile()) {
                 val defaults = MessageConfiguration.getDefaultConfiguration()
                 provider.save(defaults, file)
-                this.messageConfiguration = MessageConfiguration(defaults)
-                this.logger.info("Created default configuration file ${file.name}")
+                messageConfiguration = MessageConfiguration(defaults)
+                logger.info("Created default configuration file ${file.name}")
             }
+        }
+    }
 
+    private fun initializeCachingConfig() {
+        val gson = Gson()
+        val file = File(dataFolder, "caching.json")
+        if(file.exists()) {
+            cachingConfiguration = gson.fromJson(file.readText(), CacheConfiguration::class.java)
+            logger.info("Loaded configuration file ${file.name}")
+        } else {
+            if(file.createNewFile()) {
+                val default = CacheConfiguration.getDefaultConfiguration()
+                cachingConfiguration = default
+                file.writeText(gson.toJson(cachingConfiguration))
+                logger.info("Created default configuration file ${file.name}")
+            }
         }
     }
 
     private fun initializeDatabaseConfig() {
         val provider = ConfigurationProvider.getProvider(YamlConfiguration::class.java)
-        val file = File(this.dataFolder, "database.yml")
+        val file = File(dataFolder, "database.yml")
         if(file.exists()) {
             val yamlConfig = provider.load(file)
             if(yamlConfig.contains("jdbc") && yamlConfig.contains("username") && yamlConfig.contains("password")) {
-                this.databaseConfiguration = yamlConfig.getString("jdbc")?.let {
+                databaseConfiguration = yamlConfig.getString("jdbc")?.let {
                     DatabaseConfiguration(
                         it,
                         yamlConfig.getString("username")!!,
@@ -81,7 +107,7 @@ class BungeePlugin: Plugin() {
                     )
                 }!!
             } else {
-                this.logger.severe("Error whilst loading configuration file")
+                logger.severe("Error whilst loading configuration file")
             }
             this.logger.info("Loaded configuration file ${file.name}")
         } else {
@@ -94,11 +120,13 @@ class BungeePlugin: Plugin() {
                 defaultConfig.set("username", defaultUsername)
                 defaultConfig.set("password", defaultPassword)
                 provider.save(defaultConfig, file)
-                this.databaseConfiguration = DatabaseConfiguration(defaultJdbc, defaultUsername, defaultPassword)
-                this.logger.info("Created default configuration file ${file.name}")
-                this.logger.warning("Please edit your database settings - Password \"password\" is not secure enough.")
+                databaseConfiguration = DatabaseConfiguration(defaultJdbc, defaultUsername, defaultPassword)
+                logger.info("Created default configuration file ${file.name}")
+                logger.warning("Please edit your database settings - Password \"password\" is not secure enough.")
             }
 
         }
+
+        databaseService = DatabaseService(HikariDatabaseProvider(databaseConfiguration.dataSource))
     }
 }

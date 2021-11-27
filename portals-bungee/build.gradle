@@ -14,6 +14,7 @@ repositories {
 dependencies {
     implementation project(":portals-core")
     implementation group: "com.zaxxer", name: "HikariCP", version: "3.4.5"
+    implementation 'com.github.ben-manes.caffeine:caffeine:2.5.5'
     compileOnly group: 'net.md-5', name: 'bungeecord-api', version: '1.16-R0.3'
 }
 
@@ -23,7 +24,7 @@ shadowJar {
     relocate('kotlin' as String, project.group + '.portals.bungee.libs.kotlin' as String)
     relocate('org.intellij.lang.annotations' as String, project.group + '.portals.bungee.libs.annotations.intellij' as String)
     relocate('org.jetbrains.annotations' as String, project.group + '.portals.bungee.libs.annotations.jetbrains' as String)
-    relocate('com.zaxxer.hikari' as String, project.group + '.portals.bungee.libs.hikari' as String)
+    relocate('com.zaxxer.hikari' as String, project.group + '.portals.core.libs.hikari' as String)
     relocate('org.slf4j' as String, project.group + '.portals.bungee.libs.slf4j' as String)
 }
 

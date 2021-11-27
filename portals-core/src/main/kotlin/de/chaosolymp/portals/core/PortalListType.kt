@@ -1,4 +1,4 @@
-package de.chaosolymp.portals.bungee
+package de.chaosolymp.portals.core
 
 enum class PortalListType {
     OWN,

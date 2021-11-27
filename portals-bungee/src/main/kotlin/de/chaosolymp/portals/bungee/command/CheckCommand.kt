@@ -10,6 +10,7 @@ import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.ComponentBuilder
 import net.md_5.bungee.api.config.ServerInfo
+import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -27,6 +28,9 @@ class CheckCommand(private val plugin: BungeePlugin) : SubCommand {
 
         val proxyComponent = checkProxy().toBaseComponent("Proxy")
         sender.sendMessage(proxyComponent)
+
+        val databaseComponent = checkDatabase().toBaseComponent("Database")
+        sender.sendMessage(databaseComponent)
 
         plugin.proxy.servers.values.forEach { serverInfo ->
             val serverComponent = checkServer(serverInfo).toBaseComponent("Server ${serverInfo.name}")
@@ -46,6 +50,28 @@ class CheckCommand(private val plugin: BungeePlugin) : SubCommand {
         return CheckResult(CheckResultType.Success, "No incidents reported")
     }
 
+    private fun checkDatabase(): CheckResult {
+        if(plugin.databaseConfiguration.dataSource.isRunning && !plugin.databaseConfiguration.dataSource.isClosed) {
+            val beforeDbOperation = Instant.now()
+            val dbTime = plugin.portalManager.getDbTime()
+            val afterDbOperation = Instant.now()
+
+            if(afterDbOperation < dbTime) {
+                return CheckResult(CheckResultType.Warning, "Database time is out of sync - Database: $dbTime Server: $afterDbOperation")
+            }
+
+            val latency = Duration.between(beforeDbOperation, dbTime)
+            val latencyMillis = latency.toMillis()
+
+            if(latencyMillis > 3_000) {
+                return CheckResult(CheckResultType.Warning, "High database latency - Latency: ${latencyMillis}ms")
+            }
+
+            return CheckResult(CheckResultType.Success, "Everything is okay - Latency: ${latencyMillis}ms")
+        }
+        return CheckResult(CheckResultType.Fatal, "Connection is closed")
+    }
+
     private fun checkServer(serverInfo: ServerInfo): CheckResult {
         val pluginVersion = plugin.description.version
         val future = CompletableFuture<ServerInformationResponsePluginMessage>()
@@ -59,13 +85,13 @@ class CheckCommand(private val plugin: BungeePlugin) : SubCommand {
         serverInfo.sendData(message)
 
         try {
-            val result = future.get(20, TimeUnit.SECONDS)
+            val result = future.get(5, TimeUnit.SECONDS)
             if(result.pluginVersion != pluginVersion) {
                 return CheckResult(CheckResultType.Warning, "Plugin versions different - Server: ${result.pluginVersion} - Proxy: $pluginVersion")
             }
 
             val latencyMillis = result.timestamp - startTimestamp.toEpochMilli()
-            if(latencyMillis > 10_000) {
+            if(latencyMillis > 2_000) {
                 return CheckResult(CheckResultType.Warning, "High latency: $latencyMillis")
             }
 
@@ -75,7 +101,7 @@ class CheckCommand(private val plugin: BungeePlugin) : SubCommand {
 
             return CheckResult(CheckResultType.Success, "Seems good - Latency: $latencyMillis")
         } catch(ex: Exception) {
-            return CheckResult(CheckResultType.Fatal, "Response timeout of 20 seconds exceeded")
+            return CheckResult(CheckResultType.Fatal, "Response timeout of 5 seconds exceeded")
         } finally {
             plugin.pluginMessageListener.serverInformationResponse = null
         }

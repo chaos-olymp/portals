@@ -29,10 +29,10 @@ class PortalCommand(private val plugin: BungeePlugin) : Command("portal") {
                 commandRegistry["help"]
             }
 
-            cmd?.execute(sender, args.copyOfRange(1, args.size))
+            cmd?.execute(sender, if(args.isEmpty()) args else args.copyOfRange(1, args.size))
         } catch (ex: Exception) {
-            sender.sendMessage(ComponentBuilder("An error occurred").create())
-            ex.printStackTrace()
+            sender.sendMessage(plugin.messageConfiguration.getMessage("messages.error.exception-occurred"))
+            plugin.exceptionHandler.uncaughtException(Thread.currentThread(), ex)
         }
     }
 

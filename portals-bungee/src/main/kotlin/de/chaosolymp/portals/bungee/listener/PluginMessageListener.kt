@@ -20,14 +20,23 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
     internal var serverInformationResponse: CompletableFuture<ServerInformationResponsePluginMessage>? = null
 
     private val blockChangeMap = mutableMapOf<UUID, CompletableFuture<Void>>()
+
     @EventHandler
     @Suppress("UnstableApiUsage")
     fun handlePluginMessage(event: PluginMessageEvent) {
         // Only handle BungeeCord requests
         if (!(event.tag == "BungeeCord" || event.tag == "bungeecord:main")) return
 
+        // Deserialize input to message (see AbstractPluginMessage)
         val input = ByteStreams.newDataInput(event.data)
-        when (val deserialized = deserialize(input)) {
+        val deserialized = deserialize(input)
+
+        // Log incoming message for debugging purposes
+        if (deserialized != null) {
+            plugin.logger.info("Incoming plugin message of type ${deserialized.javaClass} - $deserialized")
+        }
+
+        when (deserialized) {
             is LocationResponsePluginMessage -> {
                 if (map.containsKey(deserialized.uuid)) {
                     map[deserialized.uuid]?.complete(LocationResponse(deserialized.canCreatePortal, deserialized.world, deserialized.x, deserialized.y, deserialized.z))
@@ -43,14 +52,14 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                 if (id != null) {
                     val link = this.plugin.portalManager.getPortalLink(id)
                     plugin.logger.info("link = $link")
-                    val portal = this.plugin.portalManager.getPortal(link)
+                    val portal = this.plugin.portalManager.getPortal(link!!)
                     plugin.logger.info("portal = $portal")
 
                     val serverInfo = this.plugin.proxy.getServerInfo(portal?.server)
                     plugin.logger.info("serverInfo = $serverInfo")
                     if (portal?.server != server) {
                         plugin.logger.info("connecting")
-                        this.plugin.proxy.getPlayer(deserialized.uuid).connect(serverInfo)
+                        plugin.proxy.getPlayer(deserialized.uuid).connect(serverInfo)
                     } else {
                         plugin.logger.info("Cannot connect, the player is on the same server")
                     }
@@ -58,10 +67,10 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                     serverInfo.sendData(AuthorizeTeleportResponsePluginMessage(deserialized.uuid, portal!!.world, portal.x, portal.y, portal.z))
                     plugin.logger.info("Sent plugin message")
                     if (portal.server != server) {
-                        this.plugin.proxy.getPlayer(deserialized.uuid).connect(serverInfo)
+                        plugin.proxy.getPlayer(deserialized.uuid).connect(serverInfo)
                     }
                 } else {
-                    this.plugin.logger.warning("${event.sender.socketAddress}: caught invalid teleportation")
+                    plugin.logger.warning("${event.sender.socketAddress}: caught invalid teleportation")
                 }
             }
             is BlockChangeAcceptancePluginMessage -> {
@@ -69,33 +78,30 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                     blockChangeMap[deserialized.uuid]?.complete(null)
                     blockChangeMap.remove(deserialized.uuid)
                 } else {
-                    this.plugin.proxy.logger.warning("${event.sender.socketAddress} sent block change response for non-requested uuid ${deserialized.uuid}.")
+                    plugin.proxy.logger.warning("${event.sender.socketAddress} sent block change response for non-requested uuid ${deserialized.uuid}.")
                 }
             }
             is ValidationPluginMessage -> {
-                val serverInfo = this.plugin.proxy.getPlayer(deserialized.uuid).server.info
+                val serverInfo = plugin.proxy.getPlayer(deserialized.uuid).server.info
 
                 val valid = plugin.portalManager.getPortalIdAt(serverInfo.name, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z) != null
                 serverInfo.sendData(ValidationResponsePluginMessage(deserialized.uuid, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z, valid))
             }
             is ServerInformationResponsePluginMessage -> serverInformationResponse?.complete(deserialized)
-            else -> {}
+            else -> plugin.logger.warning("Unknown incoming plugin message")
         }
     }
 
-    @Suppress("UnstableApiUsage")
     fun requestLocation(player: ProxiedPlayer, future: CompletableFuture<LocationResponse>) {
         map[player.uniqueId] = future
         player.server.sendData(RequestLocationPluginMessage(player.uniqueId))
     }
 
-    @Suppress("UnstableApiUsage")
     fun sendBlockChange(player: ProxiedPlayer, future: CompletableFuture<Void>) {
         blockChangeMap[player.uniqueId] = future
         player.server.sendData(BlockChangeRequestPluginMessage(player.uniqueId))
     }
 
-    @Suppress("UnstableApiUsage")
     fun sendBlockDestroy(server: String, world: String, x: Int, y: Int, z: Int) {
         plugin.proxy.servers[server]!!.sendData(BlockDestroyRequestPluginMessage(world, x, y, z))
     }
