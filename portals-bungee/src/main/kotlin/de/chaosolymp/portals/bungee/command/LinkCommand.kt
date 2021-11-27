@@ -2,21 +2,28 @@ package de.chaosolymp.portals.bungee.command
 
 import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.bungee.config.Replacement
-import de.chaosolymp.portals.bungee.sendMessage
+import de.chaosolymp.portals.bungee.extensions.sendMessage
 import de.chaosolymp.portals.core.NumberUtils
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
 
 class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
     override fun execute(sender: CommandSender, args: Array<out String>?) {
+        // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.link")) {
             sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-permission"))
             return
         }
+
+        // Send error message if `sender` is not an instance of `ProxiedPlayer`
+        // We need this, because we require a Location of the player
+        // The console is not able to provide a Location
         if (sender !is ProxiedPlayer) {
             sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.not-a-player"))
             return
         }
+
+        // Validate argument count
         if (args == null || args.size != 2) {
             sender.sendMessage(
                 this.plugin.messageConfiguration.getMessage(
@@ -29,18 +36,23 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
         val origin = args[0]
         val target = args[1]
 
+        // Use user-provided id if user entered a valid numeric value > 0
+        // Otherwise find id in database by its name
         val originId = if (NumberUtils.isUnsignedNumber(origin)) {
             Integer.parseUnsignedInt(origin)
         } else {
             plugin.portalManager.getIdOfName(origin)
         }
 
+        // Use user-provided id if user entered a valid numeric value > 0
+        // Otherwise find id in database by its name
         val targetId = if (NumberUtils.isUnsignedNumber(target)) {
             Integer.parseUnsignedInt(target)
         } else {
             plugin.portalManager.getIdOfName(target)
         }
 
+        // Send error message if `originId` does not exist
         if (!this.plugin.portalManager.doesIdExists(originId)) {
             sender.sendMessage(
                 this.plugin.messageConfiguration.getMessage(
@@ -49,6 +61,8 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
             )
             return
         }
+
+        // Send error message if `targetId` does not exist
         if (!this.plugin.portalManager.doesIdExists(targetId)) {
             sender.sendMessage(
                 this.plugin.messageConfiguration.getMessage(
@@ -57,6 +71,9 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
             )
             return
         }
+
+        // Send error message if neither player own the origin portal
+        // nor the player has admin permission
         if (!plugin.portalManager.doesPlayerOwnPortal(sender.uniqueId, originId)) {
             sender.sendMessage(
                 this.plugin.messageConfiguration.getMessage(
@@ -65,6 +82,8 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
             )
             return
         }
+
+        // Send error message if the target portal is not public and the player does not own the portal
         if ((!plugin.portalManager.isPublic(targetId) || plugin.portalManager.doesPlayerOwnPortal(
                 sender.uniqueId,
                 targetId
@@ -77,7 +96,11 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
             )
             return
         }
+
+        // Do link operation on database
         plugin.portalManager.link(originId, targetId)
+
+        // Send result message
         sender.sendMessage(
             this.plugin.messageConfiguration.getMessage(
                 "command.link",

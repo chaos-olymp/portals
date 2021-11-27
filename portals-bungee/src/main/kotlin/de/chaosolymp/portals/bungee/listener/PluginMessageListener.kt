@@ -2,14 +2,11 @@ package de.chaosolymp.portals.bungee.listener
 
 import com.google.common.io.ByteStreams
 import de.chaosolymp.portals.core.messages.generated.deserialize
-import de.chaosolymp.portals.core.messages.generated.serialize
 import de.chaosolymp.portals.bungee.BungeePlugin
+import de.chaosolymp.portals.bungee.extensions.sendData
 import de.chaosolymp.portals.core.*
 import de.chaosolymp.portals.core.messages.proxy_to_server.*
-import de.chaosolymp.portals.core.messages.server_to_proxy.AuthorizeTeleportRequestPluginMessage
-import de.chaosolymp.portals.core.messages.server_to_proxy.BlockChangeAcceptancePluginMessage
-import de.chaosolymp.portals.core.messages.server_to_proxy.LocationResponsePluginMessage
-import de.chaosolymp.portals.core.messages.server_to_proxy.ValidationPluginMessage
+import de.chaosolymp.portals.core.messages.server_to_proxy.*
 import net.md_5.bungee.api.connection.ProxiedPlayer
 import net.md_5.bungee.api.event.PluginMessageEvent
 import net.md_5.bungee.api.plugin.Listener
@@ -20,13 +17,15 @@ import java.util.concurrent.CompletableFuture
 class PluginMessageListener(val plugin: BungeePlugin) : Listener {
 
     private val map = mutableMapOf<UUID, CompletableFuture<LocationResponse>>()
+    internal var serverInformationResponse: CompletableFuture<ServerInformationResponsePluginMessage>? = null
 
     private val blockChangeMap = mutableMapOf<UUID, CompletableFuture<Void>>()
-
     @EventHandler
     @Suppress("UnstableApiUsage")
     fun handlePluginMessage(event: PluginMessageEvent) {
+        // Only handle BungeeCord requests
         if (!(event.tag == "BungeeCord" || event.tag == "bungeecord:main")) return
+
         val input = ByteStreams.newDataInput(event.data)
         when (val deserialized = deserialize(input)) {
             is LocationResponsePluginMessage -> {
@@ -56,12 +55,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                         plugin.logger.info("Cannot connect, the player is on the same server")
                     }
 
-                    val out = ByteStreams.newDataOutput()
-
-                    val message = AuthorizeTeleportResponsePluginMessage(deserialized.uuid, portal!!.world, portal.x, portal.y, portal.z)
-                    serialize(message, out)
-
-                    serverInfo.sendData("BungeeCord", out.toByteArray())
+                    serverInfo.sendData(AuthorizeTeleportResponsePluginMessage(deserialized.uuid, portal!!.world, portal.x, portal.y, portal.z))
                     plugin.logger.info("Sent plugin message")
                     if (portal.server != server) {
                         this.plugin.proxy.getPlayer(deserialized.uuid).connect(serverInfo)
@@ -82,12 +76,9 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                 val serverInfo = this.plugin.proxy.getPlayer(deserialized.uuid).server.info
 
                 val valid = plugin.portalManager.getPortalIdAt(serverInfo.name, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z) != null
-                val message = ValidationResponsePluginMessage(deserialized.uuid, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z, valid)
-
-                val out = ByteStreams.newDataOutput()
-                serialize(message, out)
-                serverInfo.sendData("BungeeCord", out.toByteArray())
+                serverInfo.sendData(ValidationResponsePluginMessage(deserialized.uuid, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z, valid))
             }
+            is ServerInformationResponsePluginMessage -> serverInformationResponse?.complete(deserialized)
             else -> {}
         }
     }
@@ -95,29 +86,17 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
     @Suppress("UnstableApiUsage")
     fun requestLocation(player: ProxiedPlayer, future: CompletableFuture<LocationResponse>) {
         map[player.uniqueId] = future
-
-        val output = ByteStreams.newDataOutput()
-        serialize(RequestLocationPluginMessage(player.uniqueId), output)
-
-        player.server.sendData("BungeeCord", output.toByteArray())
+        player.server.sendData(RequestLocationPluginMessage(player.uniqueId))
     }
 
     @Suppress("UnstableApiUsage")
     fun sendBlockChange(player: ProxiedPlayer, future: CompletableFuture<Void>) {
         blockChangeMap[player.uniqueId] = future
-
-        val output = ByteStreams.newDataOutput()
-        serialize(BlockChangeRequestPluginMessage(player.uniqueId), output)
-
-        player.server.sendData("BungeeCord", output.toByteArray())
+        player.server.sendData(BlockChangeRequestPluginMessage(player.uniqueId))
     }
 
     @Suppress("UnstableApiUsage")
     fun sendBlockDestroy(server: String, world: String, x: Int, y: Int, z: Int) {
-
-        val output = ByteStreams.newDataOutput()
-        serialize(BlockDestroyRequestPluginMessage(world, x, y, z), output)
-
-        plugin.proxy.servers[server]!!.sendData("BungeeCord", output.toByteArray())
+        plugin.proxy.servers[server]!!.sendData(BlockDestroyRequestPluginMessage(world, x, y, z))
     }
 }

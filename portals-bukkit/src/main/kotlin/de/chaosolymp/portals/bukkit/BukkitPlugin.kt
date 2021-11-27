@@ -5,11 +5,9 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldguard.WorldGuard
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin
+import de.chaosolymp.portals.bukkit.extensions.sendPluginMessage
 import de.chaosolymp.portals.bukkit.listener.PluginCommunicationListener
 import de.chaosolymp.portals.bukkit.listener.PortalListener
-import de.chaosolymp.portals.core.IDENTIFIER_AUTHORIZE_TELEPORT
-import de.chaosolymp.portals.core.IDENTIFIER_VALIDATE
-import de.chaosolymp.portals.core.extensions.writeUUID
 import de.chaosolymp.portals.core.messages.generated.serialize
 import de.chaosolymp.portals.core.messages.server_to_proxy.AuthorizeTeleportRequestPluginMessage
 import de.chaosolymp.portals.core.messages.server_to_proxy.ValidationPluginMessage
@@ -33,8 +31,9 @@ class BukkitPlugin: JavaPlugin {
     private lateinit var configFile: File
     private lateinit var config: YamlConfiguration
     private lateinit var pluginCommunicationListener: PluginCommunicationListener
-    internal val portalRequestMap = mutableMapOf<Pair<String, Triple<Int, Int, Int>>, CompletableFuture<Boolean>>()
 
+    internal lateinit var exceptionHandler: ExceptionHandler
+    internal val portalRequestMap = mutableMapOf<Pair<String, Triple<Int, Int, Int>>, CompletableFuture<Boolean>>()
     internal val pendingTeleports = mutableListOf<Pair<UUID, Location>>()
 
     // Called via reflection in testing environment by MockBukkit
@@ -53,13 +52,14 @@ class BukkitPlugin: JavaPlugin {
         this.initConfig()
         this.server.pluginManager.registerEvents(PortalListener(this),this)
 
-        val exceptionHandler = ExceptionHandler(this)
+        exceptionHandler = ExceptionHandler(this)
         Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
         this.logger.info("Initialized global exception handler")
 
         if (RuntimeStatics.TEST_ENVIRONMENT) {
             this.logger.info("Skipping plugin channel listener registration because we're in TEST_ENVIRONMENT")
         } else {
+            this.logger.info("Environment: Production")
             this.server.messenger.registerIncomingPluginChannel(this, "BungeeCord", this.pluginCommunicationListener)
             this.server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
             this.logger.info("Registered Plugin Channel listeners")
@@ -145,13 +145,10 @@ class BukkitPlugin: JavaPlugin {
         val y = location.blockY
         val z = location.blockZ
 
-        val output = ByteStreams.newDataOutput()
-        serialize(ValidationPluginMessage(player.uniqueId, world, x, y, z), output)
-
         val future = CompletableFuture<Boolean>()
         portalRequestMap[Pair(world, Triple(x, y, z))] = future
 
-        player.sendPluginMessage(this, "BungeeCord", output.toByteArray())
+        player.sendPluginMessage(this, ValidationPluginMessage(player.uniqueId, world, x, y, z))
 
         return future.get()
     }

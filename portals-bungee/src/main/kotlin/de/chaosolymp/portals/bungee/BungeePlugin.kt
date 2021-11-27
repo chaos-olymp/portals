@@ -17,6 +17,8 @@ class BungeePlugin: Plugin() {
     lateinit var databaseConfiguration: DatabaseConfiguration
     lateinit var pluginMessageListener: PluginMessageListener
 
+    internal lateinit var exceptionHandler: ExceptionHandler
+
     override fun onEnable() {
         val startTime = System.currentTimeMillis()
 
@@ -28,7 +30,7 @@ class BungeePlugin: Plugin() {
         this.initializeMessageConfig()
         this.initializeDatabaseConfig()
 
-        val exceptionHandler = ExceptionHandler(this)
+        exceptionHandler = ExceptionHandler(this)
         Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
         this.logger.info("Initialized global exception handler")
 

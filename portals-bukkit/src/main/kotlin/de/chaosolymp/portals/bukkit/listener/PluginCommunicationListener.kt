@@ -1,21 +1,20 @@
 package de.chaosolymp.portals.bukkit.listener
 
 import com.google.common.io.ByteStreams
-import de.chaosolymp.portals.core.messages.generated.deserialize
-import de.chaosolymp.portals.core.messages.generated.serialize
 import de.chaosolymp.portals.bukkit.BukkitPlugin
-import de.chaosolymp.portals.core.messages.proxy_to_server.BlockChangeRequestPluginMessage
-import de.chaosolymp.portals.core.messages.proxy_to_server.BlockDestroyRequestPluginMessage
-import de.chaosolymp.portals.core.messages.proxy_to_server.RequestLocationPluginMessage
-import de.chaosolymp.portals.core.messages.proxy_to_server.ValidationResponsePluginMessage
+import de.chaosolymp.portals.bukkit.extensions.sendPluginMessage
+import de.chaosolymp.portals.core.messages.generated.deserialize
+import de.chaosolymp.portals.core.messages.proxy_to_server.*
 import de.chaosolymp.portals.core.messages.server_to_proxy.AuthorizeTeleportRequestPluginMessage
 import de.chaosolymp.portals.core.messages.server_to_proxy.BlockChangeAcceptancePluginMessage
 import de.chaosolymp.portals.core.messages.server_to_proxy.LocationResponsePluginMessage
+import de.chaosolymp.portals.core.messages.server_to_proxy.ServerInformationResponsePluginMessage
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.messaging.PluginMessageListener
+import java.time.Instant
 
 class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMessageListener {
     @Suppress("UnstableApiUsage")
@@ -23,29 +22,27 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
         if (!(channel == "BungeeCord" || channel == "bungeecord:main")) return
 
         val input = ByteStreams.newDataInput(message)
-        when(val deserialized = deserialize(input)) {
+        when (val deserialized = deserialize(input)) {
             is RequestLocationPluginMessage -> {
-                val output = ByteStreams.newDataOutput()
-
                 val targetPlayer = plugin.server.getPlayer(deserialized.uuid) ?: return
                 val worldName = targetPlayer.world.name
-
-                serialize(LocationResponsePluginMessage(
-                    deserialized.uuid,
-                    plugin.canCreatePortal(targetPlayer),
-                    worldName,
-                    targetPlayer.location.x.toInt(),
-                    targetPlayer.location.y.toInt(),
-                    targetPlayer.location.z.toInt()
-                ), output)
-
-                player.sendPluginMessage(this.plugin, "BungeeCord", output.toByteArray())
+                player.sendPluginMessage(
+                    this.plugin, LocationResponsePluginMessage(
+                        deserialized.uuid,
+                        plugin.canCreatePortal(targetPlayer),
+                        worldName,
+                        targetPlayer.location.x.toInt(),
+                        targetPlayer.location.y.toInt(),
+                        targetPlayer.location.z.toInt()
+                    )
+                )
             }
             is AuthorizeTeleportRequestPluginMessage -> {
                 val targetPlayer = plugin.server.getPlayer(deserialized.uuid)
                 val world = plugin.server.getWorld(deserialized.world)
 
-                val location = Location(world, deserialized.x.toDouble(), deserialized.y.toDouble(), deserialized.z.toDouble())
+                val location =
+                    Location(world, deserialized.x.toDouble(), deserialized.y.toDouble(), deserialized.z.toDouble())
                 targetPlayer?.teleport(location) ?: plugin.pendingTeleports.add(Pair(deserialized.uuid, location))
             }
             is BlockChangeRequestPluginMessage -> {
@@ -54,11 +51,7 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                 val block = blockLocation.world!!.getBlockAt(blockLocation)
                 block.setType(Material.END_PORTAL, false)
 
-                val output = ByteStreams.newDataOutput()
-
-                serialize(BlockChangeAcceptancePluginMessage(deserialized.uuid), output)
-
-                player.sendPluginMessage(this.plugin, "BungeeCord", output.toByteArray())
+                player.sendPluginMessage(this.plugin, BlockChangeAcceptancePluginMessage(deserialized.uuid))
             }
             is BlockDestroyRequestPluginMessage -> {
                 val chunkX = deserialized.x shr 4
@@ -68,7 +61,7 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                 val chunk = world.getChunkAt(chunkX, chunkZ)
 
                 val loaded = chunk.isLoaded
-                if(!loaded) {
+                if (!loaded) {
                     chunk.load(true)
                 }
 
@@ -76,19 +69,33 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                 val stack = ItemStack(block.type, 1)
                 block.type = Material.AIR
 
-                world.dropItem(Location(
-                    world,
-                    deserialized.x.toDouble(),
-                    deserialized.y.toDouble(),
-                    deserialized.z.toDouble()
-                ), stack)
+                world.dropItem(
+                    Location(
+                        world,
+                        deserialized.x.toDouble(),
+                        deserialized.y.toDouble(),
+                        deserialized.z.toDouble()
+                    ), stack
+                )
 
-                if(!loaded) {
+                if (!loaded) {
                     chunk.unload(true)
                 }
             }
             is ValidationResponsePluginMessage -> {
-                plugin.portalRequestMap[Pair(deserialized.worldName, Triple(deserialized.x, deserialized.y, deserialized.z))]?.complete(deserialized.valid)
+                plugin.portalRequestMap[Pair(
+                    deserialized.worldName,
+                    Triple(deserialized.x, deserialized.y, deserialized.z)
+                )]?.complete(deserialized.valid)
+            }
+            is ServerInformationRequestPluginMessage -> {
+                player.sendPluginMessage(
+                    this.plugin, ServerInformationResponsePluginMessage(
+                        plugin.description.version,
+                        Instant.now().toEpochMilli(),
+                        plugin.exceptionHandler.exceptionCount
+                    )
+                )
             }
         }
     }

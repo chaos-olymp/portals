@@ -12,7 +12,7 @@ import java.util.*
 
 class PortalListener(private val plugin: BukkitPlugin) : Listener {
 
-    private val cooldown = 3 * 1000 // In milliseconds (1 * 3000 = 3 seconds)
+    private val coolDown = 3 * 1000 // In milliseconds (1 * 3000 = 3 seconds)
     private val joinTimeMap = mutableMapOf<UUID, Long>()
 
     @EventHandler
@@ -51,7 +51,7 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
 
     @EventHandler
     fun handleSneakToggle(event: PlayerToggleSneakEvent) {
-        val joinTime = joinTimeMap[event.player.uniqueId]?.plus(cooldown)
+        val joinTime = joinTimeMap[event.player.uniqueId]?.plus(coolDown)
         if(joinTime != null && joinTime > System.currentTimeMillis()) {
             event.player.sendTitle("", "Cooldown ...", 500, 500, 500)
             return

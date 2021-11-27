@@ -1,4 +1,4 @@
-package de.chaosolymp.portals.bungee
+package de.chaosolymp.portals.bungee.extensions
 
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.chat.BaseComponent
