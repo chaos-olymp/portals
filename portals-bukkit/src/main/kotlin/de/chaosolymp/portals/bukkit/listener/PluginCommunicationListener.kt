@@ -34,16 +34,20 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
             is RequestLocationPluginMessage -> {
                 val targetPlayer = plugin.server.getPlayer(deserialized.uuid) ?: return
                 val worldName = targetPlayer.world.name
-                player.sendPluginMessage(
-                    this.plugin, LocationResponsePluginMessage(
-                        deserialized.uuid,
-                        plugin.canCreatePortal(targetPlayer),
-                        worldName,
-                        targetPlayer.location.x.toInt(),
-                        targetPlayer.location.y.toInt(),
-                        targetPlayer.location.z.toInt()
-                    )
+
+                val outgoingMessage = LocationResponsePluginMessage(
+                    deserialized.uuid,
+                    plugin.canCreatePortal(targetPlayer),
+                    worldName,
+                    targetPlayer.location.x.toInt(),
+                    targetPlayer.location.y.toInt(),
+                    targetPlayer.location.z.toInt()
                 )
+
+                player.sendPluginMessage(
+                    this.plugin, outgoingMessage
+                )
+                plugin.logger.info("Wrote outgoing message: $outgoingMessage")
             }
             is AuthorizeTeleportRequestPluginMessage -> {
                 val targetPlayer = plugin.server.getPlayer(deserialized.uuid)
@@ -59,7 +63,10 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                 val block = blockLocation.world!!.getBlockAt(blockLocation)
                 block.setType(Material.END_PORTAL, false)
 
-                player.sendPluginMessage(this.plugin, BlockChangeAcceptancePluginMessage(deserialized.uuid))
+                val outgoingMessage = BlockChangeAcceptancePluginMessage(deserialized.uuid)
+
+                player.sendPluginMessage(this.plugin, outgoingMessage)
+                plugin.logger.info("Wrote outgoing message: $outgoingMessage")
             }
             is BlockDestroyRequestPluginMessage -> {
                 val chunkX = deserialized.x shr 4
@@ -97,13 +104,15 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                 )]?.complete(deserialized.valid)
             }
             is ServerInformationRequestPluginMessage -> {
-                player.sendPluginMessage(
-                    this.plugin, ServerInformationResponsePluginMessage(
-                        plugin.description.version,
-                        Instant.now().toEpochMilli(),
-                        plugin.exceptionHandler.exceptionCount
-                    )
+                val outgoingMessage = ServerInformationResponsePluginMessage(
+                    plugin.description.version,
+                    Instant.now().toEpochMilli(),
+                    plugin.exceptionHandler.exceptionCount
                 )
+                player.sendPluginMessage(
+                    this.plugin, outgoingMessage
+                )
+                plugin.logger.info("Wrote outgoing message: $outgoingMessage")
             }
             else -> plugin.logger.warning("Unknown incoming plugin message")
         }

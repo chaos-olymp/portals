@@ -1,6 +1,7 @@
 package de.chaosolymp.portals.core
 
 import de.chaosolymp.portals.core.extensions.getUUID
+import java.sql.Statement
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.*
@@ -75,8 +76,8 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                 INSERT INTO `portals` (owner, name, public, created, server, world, x, y, z) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
-                            arrayOf("id")
-                    ) // Statement.RETURN_GENERATED_KEYS
+                        Statement.RETURN_GENERATED_KEYS
+                    )
             stmt.setBytes(1, UUIDUtils.getBytesFromUUID(owner))
             stmt.setString(2, name)
             stmt.setBoolean(3, public)

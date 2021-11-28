@@ -70,7 +70,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                         plugin.proxy.getPlayer(deserialized.uuid).connect(serverInfo)
                     }
                 } else {
-                    plugin.logger.warning("${event.sender.socketAddress}: caught invalid teleportation")
+                    plugin.logger.warning("Caught invalid teleportation - World: ${deserialized.world} X: ${deserialized.x} Y: ${deserialized.y} Z: ${deserialized.z}")
                 }
             }
             is BlockChangeAcceptancePluginMessage -> {
@@ -87,7 +87,13 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                 val valid = plugin.portalManager.getPortalIdAt(serverInfo.name, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z) != null
                 serverInfo.sendData(ValidationResponsePluginMessage(deserialized.uuid, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z, valid))
             }
-            is ServerInformationResponsePluginMessage -> serverInformationResponse?.complete(deserialized)
+            is ServerInformationResponsePluginMessage -> {
+                if(serverInformationResponse == null) {
+                    plugin.proxy.logger.warning("Future for ServerInformationResponsePluginMessage is not present")
+                } else {
+                    serverInformationResponse!!.complete(deserialized)
+                }
+            }
             else -> plugin.logger.warning("Unknown incoming plugin message")
         }
     }

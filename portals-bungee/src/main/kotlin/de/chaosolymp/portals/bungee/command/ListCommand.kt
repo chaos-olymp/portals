@@ -23,7 +23,7 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Validate arguments
         val page = if (args?.size!! > 0) {
-            args[0].toUIntOrNull()?.toInt()
+            args[0].toUIntOrNull()?.toInt() ?: 1
         } else {
             1
         }
@@ -52,7 +52,7 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
         }
 
         // Send message if no valid page provided
-        if (page == null || page == 0) {
+        if (page == 0) {
             sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.pagination.unknown-number"))
             return
         }

@@ -43,8 +43,8 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
         }
 
         // Send error message if this portal name is already present in database
-        if (!this.plugin.portalManager.doesNameExist(name)) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.database-error"))
+        if (this.plugin.portalManager.doesNameExist(name)) {
+            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.name-already-exists"))
             return
         }
 

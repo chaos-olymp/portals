@@ -38,10 +38,14 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Use user-provided id if user entered a valid numeric value > 0
         // Otherwise find id in database by its name
-        val originId = if (NumberUtils.isUnsignedNumber(origin)) {
+        val originId: Int? = if (NumberUtils.isUnsignedNumber(origin)) {
             Integer.parseUnsignedInt(origin)
         } else {
-            plugin.portalManager.getIdOfName(origin)
+            if(plugin.portalManager.doesNameExist(origin)) {
+                plugin.portalManager.getIdOfName(origin)
+            } else {
+                null
+            }
         }
 
         // Use user-provided id if user entered a valid numeric value > 0
@@ -49,11 +53,15 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
         val targetId = if (NumberUtils.isUnsignedNumber(target)) {
             Integer.parseUnsignedInt(target)
         } else {
-            plugin.portalManager.getIdOfName(target)
+            if(plugin.portalManager.doesNameExist(target)) {
+                plugin.portalManager.getIdOfName(target)
+            } else {
+                null
+            }
         }
 
         // Send error message if `originId` does not exist
-        if (!this.plugin.portalManager.doesIdExists(originId)) {
+        if (originId == null || !this.plugin.portalManager.doesIdExists(originId)) {
             sender.sendMessage(
                 this.plugin.messageConfiguration.getMessage(
                     "error.origin-not-exists"
@@ -63,7 +71,7 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
         }
 
         // Send error message if `targetId` does not exist
-        if (!this.plugin.portalManager.doesIdExists(targetId)) {
+        if (targetId == null || !this.plugin.portalManager.doesIdExists(targetId)) {
             sender.sendMessage(
                 this.plugin.messageConfiguration.getMessage(
                     "error.link-not-exists"
@@ -84,7 +92,7 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
         }
 
         // Send error message if the target portal is not public and the player does not own the portal
-        if ((!plugin.portalManager.isPublic(targetId) || plugin.portalManager.doesPlayerOwnPortal(
+        if (!(plugin.portalManager.isPublic(targetId) || plugin.portalManager.doesPlayerOwnPortal(
                 sender.uniqueId,
                 targetId
             ))

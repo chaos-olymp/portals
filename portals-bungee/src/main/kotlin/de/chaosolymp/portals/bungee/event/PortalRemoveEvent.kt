@@ -10,5 +10,5 @@ class PortalRemoveEvent: Event(), Cancellable {
         this.cancel = cancel
     }
 
-    override fun isCancelled() = this.cancel
+    override fun isCancelled() = cancel
 }

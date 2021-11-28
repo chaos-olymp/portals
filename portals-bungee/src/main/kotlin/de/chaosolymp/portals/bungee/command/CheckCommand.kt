@@ -14,6 +14,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 class CheckCommand(private val plugin: BungeePlugin) : SubCommand {
     override fun execute(sender: CommandSender, args: Array<out String>?) {
@@ -61,7 +62,7 @@ class CheckCommand(private val plugin: BungeePlugin) : SubCommand {
             }
 
             val latency = Duration.between(beforeDbOperation, dbTime)
-            val latencyMillis = latency.toMillis()
+            val latencyMillis = abs(latency.toMillis())
 
             if(latencyMillis > 3_000) {
                 return CheckResult(CheckResultType.Warning, "High database latency - Latency: ${latencyMillis}ms")

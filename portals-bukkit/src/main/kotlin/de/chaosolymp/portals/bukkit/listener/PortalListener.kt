@@ -36,6 +36,23 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
     }
 
     @EventHandler
+    fun handleSneakInPortal(event: PlayerToggleSneakEvent) {
+        if(!event.isSneaking) return
+
+        // Get block at moving-to location
+        val world = event.player.location.world ?: return
+        val block = world.getBlockAt(event.player.location)
+
+        // Only handle blocks with typeof PORTAL_MATERIAL
+        if(block.type != PORTAL_MATERIAL) return
+
+        // Show particles
+        plugin.handlePortalAppearance(event.player)
+
+        plugin.teleport(event.player, block)
+    }
+
+    @EventHandler
     fun handleBreakPortal(event: BlockBreakEvent) {
         // Disallow portal block breaking
         if (event.block.type != PORTAL_MATERIAL || !plugin.isValidPortal(event.player, event.block.location)) return
@@ -55,7 +72,7 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
         }
     }
 
-    @EventHandler
+    /*@EventHandler
     fun handleSneakToggle(event: PlayerToggleSneakEvent) {
         val joinTime = joinTimeMap[event.player.uniqueId]?.plus(coolDown)
         if(joinTime != null && joinTime > System.currentTimeMillis()) {
@@ -71,6 +88,6 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
         } else {
             joinTimeMap.remove(event.player.uniqueId)
         }
-    }
+    }*/
 
 }

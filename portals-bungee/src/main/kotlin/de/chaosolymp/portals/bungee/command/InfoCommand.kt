@@ -16,7 +16,9 @@ class InfoCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Validate argument count
         if (args?.size != 1) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.not-exists"))
+            sender.sendMessage(this.plugin.messageConfiguration.getMessage(
+                "error.wrong-syntax",
+                Replacement("syntax", "/portal info <name>")))
             return
         }
 
@@ -29,7 +31,10 @@ class InfoCommand(private val plugin: BungeePlugin) : SubCommand {
         }
 
         // Portal does not exist
-        if (portal == null) return
+        if (portal == null) {
+            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.not-exists"))
+            return
+        }
 
         // Send information message
         sender.sendMessage(

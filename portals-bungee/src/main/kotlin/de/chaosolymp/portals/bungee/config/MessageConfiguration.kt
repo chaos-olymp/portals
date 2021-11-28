@@ -26,7 +26,7 @@ class MessageConfiguration(private val config: Configuration) {
             config.set("messages.error.pagination.unknown-number", "%prefix% &cDies ist keine valide Seitenzahl.")
             config.set("messages.error.pagination.not-exists", "%prefix% &cDiese Seite existiert nicht.")
             config.set("messages.error.exception-occurred", "%prefix% &cEin ungewöhnlicher Fehler ist aufgetreten. Die Administratoren wurden benachrichtigt.")
-            config.set("messages.command.link", "%prefix% &9Du hast erfolgreich das Portal &2{origin-name}&6#{origin-id} &9mit dem Portal &2{link-name}&6#{link-id} verknüpft.")
+            config.set("messages.command.link", "%prefix% &9Du hast erfolgreich das Portal &2{origin-name} &6#{origin-id} &9mit dem Portal &2{link-name} &6#{link-id} &9verknüpft.")
             config.set("messages.command.create", "%prefix% &9Du hast erfolgreich das Portal &2{name} &9mit der Identifikationsnummer &6#{id} &9erstellt.")
             config.set("messages.command.remove", "%prefix% &9Du hast erfolgreich das Portal &2{name} &9mit der Identifikationsnummer &6#{id} &9entfernt.")
             config.set("messages.command.modify.public", "%prefix% &9Du hast das Portal &2{name}&6#{id} &9öffentlich gestellt.")

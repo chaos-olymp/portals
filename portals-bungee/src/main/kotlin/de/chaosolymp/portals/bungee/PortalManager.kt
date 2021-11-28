@@ -26,12 +26,17 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
         plugin.proxy.pluginManager.callEvent(event)
 
         if(event.isCancelled) {
+            plugin.logger.info("Portal creation cancelled")
             return null
         }
 
         // Store on database
         val result = databaseService.createPortal(owner, name, server, public, world, x, y, z)
-        plugin.logger.info("Created portal with id #$result")
+        if(result == null) {
+            plugin.logger.severe("Database error occurred in createPortal (Generated Key not present!)")
+        } else {
+            plugin.logger.info("Created portal with id #$result")
+        }
 
         return result
     }

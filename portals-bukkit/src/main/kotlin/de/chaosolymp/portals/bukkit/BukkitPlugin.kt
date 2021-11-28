@@ -1,6 +1,5 @@
 package de.chaosolymp.portals.bukkit
 
-import com.google.common.io.ByteStreams
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldguard.WorldGuard
@@ -8,7 +7,6 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin
 import de.chaosolymp.portals.bukkit.extensions.sendPluginMessage
 import de.chaosolymp.portals.bukkit.listener.PluginCommunicationListener
 import de.chaosolymp.portals.bukkit.listener.PortalListener
-import de.chaosolymp.portals.core.messages.generated.serialize
 import de.chaosolymp.portals.core.messages.server_to_proxy.AuthorizeTeleportRequestPluginMessage
 import de.chaosolymp.portals.core.messages.server_to_proxy.ValidationPluginMessage
 import net.md_5.bungee.api.ChatMessageType
@@ -48,25 +46,25 @@ class BukkitPlugin: JavaPlugin {
                           file: File) : super(loader, description, dataFolder, file)
 
     override fun onEnable() {
-        this.pluginCommunicationListener = PluginCommunicationListener(this)
-        this.initConfig()
-        this.server.pluginManager.registerEvents(PortalListener(this),this)
+        pluginCommunicationListener = PluginCommunicationListener(this)
+        initConfig()
+        server.pluginManager.registerEvents(PortalListener(this),this)
 
         exceptionHandler = ExceptionHandler(this)
-        Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
-        this.logger.info("Initialized global exception handler")
+        //Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
+        logger.info("Initialized global exception handler")
 
         if (RuntimeStatics.TEST_ENVIRONMENT) {
-            this.logger.info("Skipping plugin channel listener registration because we're in TEST_ENVIRONMENT")
+            logger.info("Skipping plugin channel listener registration because we're in TEST_ENVIRONMENT")
         } else {
-            this.logger.info("Environment: Production")
-            this.server.messenger.registerIncomingPluginChannel(this, "BungeeCord", this.pluginCommunicationListener)
-            this.server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
-            this.logger.info("Registered Plugin Channel listeners")
+            logger.info("Environment: Production")
+            server.messenger.registerIncomingPluginChannel(this, "BungeeCord", this.pluginCommunicationListener)
+            server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
+            logger.info("Registered Plugin Channel listeners")
         }
 
-        if(this.server.pluginManager.isPluginEnabled("WorldGuard")) {
-            this.worldGuard = WorldGuard.getInstance()
+        if(server.pluginManager.isPluginEnabled("WorldGuard")) {
+            worldGuard = WorldGuard.getInstance()
         }
     }
 
@@ -78,10 +76,10 @@ class BukkitPlugin: JavaPlugin {
             config.addDefault("messages.sneak-to-tp", "> Schleiche um dich zu teleportieren <")
             config.options().copyDefaults(true)
             config.save(configFile)
-            this.logger.info("Default configuration ${configFile.name} created!")
+            logger.info("Default configuration ${configFile.name} created!")
         } else {
             config = YamlConfiguration.loadConfiguration(configFile)
-            this.logger.info("Config ${configFile.name} successfully loaded!")
+            logger.info("Config ${configFile.name} successfully loaded!")
         }
     }
 
@@ -97,15 +95,18 @@ class BukkitPlugin: JavaPlugin {
         val y = block.location.blockY
         val z = block.location.blockZ
 
-        val output = ByteStreams.newDataOutput()
-        serialize(AuthorizeTeleportRequestPluginMessage(player.uniqueId, world, x, y, z), output)
-
-        player.sendPluginMessage(this, "BungeeCord", output.toByteArray())
+        val outgoingMessage = AuthorizeTeleportRequestPluginMessage(player.uniqueId, world, x, y, z)
+        player.sendPluginMessage(this, outgoingMessage)
+        logger.info("Wrote outgoing message: $outgoingMessage")
     }
 
     internal fun canCreatePortal(player: Player): Boolean {
-        val blockLocation = player.location.subtract(0.0, 1.0, 0.0)
-        val material = player.location.world!!.getBlockAt(blockLocation).type
+        val blockLocation = player.location // no -1 because END_PORTAL_FRAME is 0.8 blocks height
+        val material = player.location.world!!.getBlockAt(Location(blockLocation.world,
+            blockLocation.blockX.toDouble(),
+            blockLocation.blockY.toDouble(),
+            blockLocation.blockZ.toDouble()
+        )).type
 
         return material == PORTAL_BASE_MATERIAL && !isInSpawnRadius(player) && hasRegionPermissions(player)
     }
@@ -148,7 +149,9 @@ class BukkitPlugin: JavaPlugin {
         val future = CompletableFuture<Boolean>()
         portalRequestMap[Pair(world, Triple(x, y, z))] = future
 
-        player.sendPluginMessage(this, ValidationPluginMessage(player.uniqueId, world, x, y, z))
+        val outgoingMessage = ValidationPluginMessage(player.uniqueId, world, x, y, z)
+        player.sendPluginMessage(this, outgoingMessage)
+        logger.info("Wrote outgoing message: $outgoingMessage")
 
         return future.get()
     }

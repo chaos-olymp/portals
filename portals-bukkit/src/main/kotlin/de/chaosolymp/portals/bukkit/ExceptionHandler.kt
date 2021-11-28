@@ -2,11 +2,17 @@ package de.chaosolymp.portals.bukkit
 
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.chat.ComponentBuilder
+import java.io.PrintWriter
+import java.io.StringWriter
 
 class ExceptionHandler(private val plugin: BukkitPlugin) : Thread.UncaughtExceptionHandler {
     internal var exceptionCount: Int = 0
 
     override fun uncaughtException(t: Thread, e: Throwable) {
+        val stringWriter = StringWriter()
+        e.printStackTrace(PrintWriter(stringWriter))
+        if(!stringWriter.toString().contains("de.chaosolymp.portals")) return
+
         val deeprobin = plugin.server.onlinePlayers.firstOrNull { player -> player.uniqueId.toString() == "375e2a8d-ab90-4601-adb1-23acafbd0c55" }
         plugin.logger.severe("Uncaught exception in Thread ${t.id}/${t.name} of type ${e.javaClass.name}: ${e.stackTraceToString()}")
         deeprobin?.spigot()?.sendMessage(*ComponentBuilder()
