@@ -17,8 +17,7 @@ repositories {
 dependencies {
     implementation project(":portals-core")
     implementation group: "com.zaxxer", name: "HikariCP", version: "3.4.5"
-    implementation 'com.github.ben-manes.caffeine:caffeine:2.5.5'
-    //compileOnly group: 'net.md-5', name: 'bungeecord-api', version: '1.16-R0.3'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.0.4'
     compileOnly bungeecord('1.18-R0.1-SNAPSHOT')
 }
 
