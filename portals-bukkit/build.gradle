@@ -1,6 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm'
     id 'com.github.johnrengelman.shadow'
+    id 'kr.entree.spigradle' version '2.2.4'
 }
 
 group 'de.chaosolymp'
@@ -18,7 +19,7 @@ dependencies {
     compileOnly "org.spigotmc:spigot-api:1.17-R0.1-SNAPSHOT"
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.3'
 
-    testImplementation 'com.github.seeseemelk:MockBukkit-v1.17:1.10.3'
+    testImplementation 'com.github.seeseemelk:MockBukkit-v1.17:1.10.4'
     testImplementation 'org.jetbrains.kotlin:kotlin-test:1.6.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
@@ -34,6 +35,17 @@ shadowJar {
 
 test {
     useJUnitPlatform()
+}
+
+// Workaround for non-legacy PaperMC downloads
+// See issue https://github.com/spigradle/spigradle/issues/71
+downloadPaper {
+    //noinspection GroovyAssignabilityCheck
+    source = 'https://papermc.io/api/v2/projects/paper/versions/1.17.1/builds/303/downloads/paper-1.17.1-303.jar'
+}
+
+runSpigot {
+
 }
 
 processResources {

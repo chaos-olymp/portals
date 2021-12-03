@@ -1,6 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm'
     id 'com.github.johnrengelman.shadow'
+    id 'kr.entree.spigradle.bungee' version '2.1.1'
 }
 
 group 'de.chaosolymp'
@@ -9,13 +10,16 @@ version rootProject.version
 repositories {
     mavenCentral()
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/public/' }
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
 }
 
 dependencies {
     implementation project(":portals-core")
     implementation group: "com.zaxxer", name: "HikariCP", version: "3.4.5"
     implementation 'com.github.ben-manes.caffeine:caffeine:2.5.5'
-    compileOnly group: 'net.md-5', name: 'bungeecord-api', version: '1.16-R0.3'
+    //compileOnly group: 'net.md-5', name: 'bungeecord-api', version: '1.16-R0.3'
+    compileOnly bungeecord('1.18-R0.1-SNAPSHOT')
 }
 
 shadowJar {
@@ -26,6 +30,11 @@ shadowJar {
     relocate('org.jetbrains.annotations' as String, project.group + '.portals.bungee.libs.annotations.jetbrains' as String)
     relocate('com.zaxxer.hikari' as String, project.group + '.portals.core.libs.hikari' as String)
     relocate('org.slf4j' as String, project.group + '.portals.bungee.libs.slf4j' as String)
+}
+
+runBungee {
+    args '--nojline', '--max-players', '100'
+    jvmArgs '-Xmx512M'
 }
 
 artifacts {

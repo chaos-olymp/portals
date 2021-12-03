@@ -94,3 +94,12 @@ javadoc/
 cwallet.sso.lck
 .java-version
 .jenv-version
+/portals-bukkit/debug/spigot/**
+!/portals-bukkit/debug/spigot/server.properties
+!/portals-bukkit/debug/spigot/spigot.yml
+!/portals-bukkit/debug/spigot/paper.yml
+!/portals-bukkit/debug/spigot/permissions.yml
+!/portals-bukkit/debug/spigot/help.yml
+!/portals-bukkit/debug/spigot/commands.yml
+/portals-bungee/debug/bungee/**
+!/portals-bungee/debug/bungee/config.yml

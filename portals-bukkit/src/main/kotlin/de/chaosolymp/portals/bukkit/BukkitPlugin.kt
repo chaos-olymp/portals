@@ -46,6 +46,10 @@ class BukkitPlugin: JavaPlugin {
                           file: File) : super(loader, description, dataFolder, file)
 
     override fun onEnable() {
+        if(!dataFolder.exists()) {
+            dataFolder.mkdirs()
+        }
+
         pluginCommunicationListener = PluginCommunicationListener(this)
         initConfig()
         server.pluginManager.registerEvents(PortalListener(this),this)

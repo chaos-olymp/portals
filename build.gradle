@@ -26,6 +26,16 @@ task allJar(type: Jar, dependsOn: subprojects.build) {
     }
 }
 
+task debugProxy {
+    group = "debug"
+    dependsOn ":portals-bungee:debugBungee"
+}
+
+task debugServer {
+    group = "debug"
+    dependsOn ":portals-bukkit:debugPaper"
+}
+
 artifacts {
     archives allJar
 }
