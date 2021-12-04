@@ -3,7 +3,7 @@ package de.chaosolymp.portals.bungee.listener
 import com.google.common.io.ByteStreams
 import de.chaosolymp.portals.core.messages.generated.deserialize
 import de.chaosolymp.portals.bungee.BungeePlugin
-import de.chaosolymp.portals.bungee.extensions.sendData
+import de.chaosolymp.portals.bungee.extension.sendData
 import de.chaosolymp.portals.core.*
 import de.chaosolymp.portals.core.messages.proxy_to_server.*
 import de.chaosolymp.portals.core.messages.server_to_proxy.*

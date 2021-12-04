@@ -2,7 +2,7 @@ package de.chaosolymp.portals.bungee.command
 
 import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.bungee.config.Replacement
-import de.chaosolymp.portals.bungee.extensions.sendMessage
+import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.NumberUtils
 import net.md_5.bungee.api.CommandSender
 

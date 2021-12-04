@@ -7,6 +7,9 @@ plugins {
 group 'de.chaosolymp'
 version rootProject.version
 
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
 repositories {
     mavenCentral()
     maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
@@ -16,7 +19,7 @@ repositories {
 
 dependencies {
     implementation project(":portals-core")
-    compileOnly "org.spigotmc:spigot-api:1.17-R0.1-SNAPSHOT"
+    compileOnly "org.spigotmc:spigot-api:1.18-R0.1-SNAPSHOT"
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.3'
 
     testImplementation 'com.github.seeseemelk:MockBukkit-v1.17:1.10.4'
@@ -41,11 +44,11 @@ test {
 // See issue https://github.com/spigradle/spigradle/issues/71
 downloadPaper {
     //noinspection GroovyAssignabilityCheck
-    source = 'https://papermc.io/api/v2/projects/paper/versions/1.17.1/builds/303/downloads/paper-1.17.1-303.jar'
+    source = 'https://papermc.io/api/v2/projects/paper/versions/1.18/builds/36/downloads/paper-1.18-36.jar'
 }
 
 runSpigot {
-
+    jvmArgs '-Xmx512M'
 }
 
 processResources {

@@ -1,9 +1,8 @@
 package de.chaosolymp.portals.bungee.command
 
 import de.chaosolymp.portals.bungee.BungeePlugin
-import de.chaosolymp.portals.bungee.extensions.sendMessage
+import de.chaosolymp.portals.bungee.extension.sendMessage
 import net.md_5.bungee.api.CommandSender
-import net.md_5.bungee.api.chat.ComponentBuilder
 import net.md_5.bungee.api.plugin.Command
 
 class PortalCommand(private val plugin: BungeePlugin) : Command("portal") {

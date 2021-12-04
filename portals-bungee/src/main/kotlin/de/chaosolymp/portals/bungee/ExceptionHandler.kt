@@ -1,9 +1,8 @@
 package de.chaosolymp.portals.bungee
 
-import de.chaosolymp.portals.bungee.extensions.sendMessage
+import de.chaosolymp.portals.bungee.extension.sendMessage
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.chat.ComponentBuilder
-import java.io.PrintStream
 import java.io.PrintWriter
 import java.io.StringWriter
 

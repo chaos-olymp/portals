@@ -49,12 +49,12 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
                 )
                 plugin.logger.info("Wrote outgoing message: $outgoingMessage")
             }
-            is AuthorizeTeleportRequestPluginMessage -> {
+            is AuthorizeTeleportResponsePluginMessage -> {
                 val targetPlayer = plugin.server.getPlayer(deserialized.uuid)
                 val world = plugin.server.getWorld(deserialized.world)
 
                 val location =
-                    Location(world, deserialized.x.toDouble(), deserialized.y.toDouble(), deserialized.z.toDouble())
+                    Location(world, deserialized.x.toDouble(), deserialized.y.toDouble() + 1, deserialized.z.toDouble())
                 targetPlayer?.teleport(location) ?: plugin.pendingTeleports.add(Pair(deserialized.uuid, location))
             }
             is BlockChangeRequestPluginMessage -> {

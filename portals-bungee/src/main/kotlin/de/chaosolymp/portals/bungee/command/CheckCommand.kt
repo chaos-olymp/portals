@@ -1,8 +1,8 @@
 package de.chaosolymp.portals.bungee.command
 
 import de.chaosolymp.portals.bungee.BungeePlugin
-import de.chaosolymp.portals.bungee.extensions.sendData
-import de.chaosolymp.portals.bungee.extensions.sendMessage
+import de.chaosolymp.portals.bungee.extension.sendData
+import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.messages.proxy_to_server.ServerInformationRequestPluginMessage
 import de.chaosolymp.portals.core.messages.server_to_proxy.ServerInformationResponsePluginMessage
 import net.md_5.bungee.api.ChatColor
