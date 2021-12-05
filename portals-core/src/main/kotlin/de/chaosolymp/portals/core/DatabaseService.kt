@@ -142,6 +142,75 @@ class DatabaseService(
         }
     }
 
+    fun getPortals(offset: Int, limit: Int): Collection<Portal> {
+        databaseProvider.useConnection {
+            val stmt =
+                it.prepareAndLogStatement(
+                    callback,
+                    """
+                SELECT 
+                    id,
+                    owner, 
+                    name, 
+                    display_name, 
+                    public, 
+                    created, 
+                    updated, 
+                    server, 
+                    world, 
+                    x, 
+                    y, 
+                    z, 
+                    link 
+                FROM `portals` 
+                LIMIT ?, ?
+            """.trimIndent()
+                )
+            stmt.setInt(1, offset)
+            stmt.setInt(2, limit)
+            val rs = stmt.executeQuery()
+
+            val list = mutableListOf<Portal>()
+            while (rs.next()) {
+                val uuid = UUIDUtils.getUUIDFromBytes(rs.getBytes("owner"))
+                val id = rs.getInt("id")
+                val name = rs.getString("name")
+                val displayName = rs.getString("display_name")
+                val public = rs.getBoolean("public")
+                val created = rs.getTimestamp("created")
+                val updated = rs.getTimestamp("updated")
+                val server = rs.getString("server")
+                val world = rs.getString("world")
+                val x = rs.getInt("x")
+                val y = rs.getInt("y")
+                val z = rs.getInt("z")
+                var link: Int? = rs.getInt("link")
+                if (rs.wasNull()) {
+                    link = null
+                }
+
+                val portal = Portal(
+                    id,
+                    uuid,
+                    name,
+                    displayName,
+                    public,
+                    created,
+                    updated,
+                    server,
+                    world,
+                    x,
+                    y,
+                    z,
+                    link
+                )
+                list.add(portal)
+            }
+
+            return list
+        }
+    }
+
     fun getPortal(id: Int): Portal? {
         databaseProvider.useConnection {
             val stmt =

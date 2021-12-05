@@ -63,6 +63,8 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
         plugin.logger.info("Set portal with name `$name` ${if(public) "public" else "private"}")
     }
 
+    fun getPortals(offset: Int, limit: Int): Collection<Portal> = databaseService.getPortals(offset, limit)
+
     fun getPortal(id: Int): Portal? = databaseService.getPortal(id)
 
     fun getPortal(name: String): Portal? = databaseService.getPortal(name)

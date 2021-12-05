@@ -3,11 +3,13 @@ package de.chaosolymp.portals.bukkit.listener
 import com.google.common.io.ByteStreams
 import de.chaosolymp.portals.bukkit.BukkitPlugin
 import de.chaosolymp.portals.bukkit.PORTAL_BASE_MATERIAL
+import de.chaosolymp.portals.bukkit.PORTAL_MATERIAL
 import de.chaosolymp.portals.bukkit.extensions.sendPluginMessage
 import de.chaosolymp.portals.core.message.generated.deserialize
 import de.chaosolymp.portals.core.message.proxy_to_server.*
 import de.chaosolymp.portals.core.message.server_to_proxy.BlockChangeAcceptancePluginMessage
 import de.chaosolymp.portals.core.message.server_to_proxy.LocationResponsePluginMessage
+import de.chaosolymp.portals.core.message.server_to_proxy.RemovePortalPluginMessage
 import de.chaosolymp.portals.core.message.server_to_proxy.ServerInformationResponsePluginMessage
 import org.bukkit.Location
 import org.bukkit.Material
@@ -38,8 +40,21 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
             is BlockDestroyRequestPluginMessage -> handleBlockDestroyRequestPluginMessage(deserialized)
             is ValidationResponsePluginMessage -> handleValidationResponsePluginMessage(deserialized)
             is ServerInformationRequestPluginMessage -> handleServerInformationRequestPluginMessage(player)
+            is CleanupRequestPluginMessage -> handleCleanupRequestPluginMessage(player, deserialized)
             else -> plugin.logger.warning("Unknown incoming plugin message")
         }
+    }
+
+    private fun handleCleanupRequestPluginMessage(player: Player, deserialized: CleanupRequestPluginMessage) {
+        val world = plugin.server.getWorld(deserialized.world) ?: return
+        val x = deserialized.x
+        val y = deserialized.y
+        val z = deserialized.z
+
+        val block = world.getBlockAt(x, y, z)
+        if(block.type == PORTAL_MATERIAL) return
+
+        player.sendPluginMessage(plugin, RemovePortalPluginMessage(player.uniqueId, world.name, x, y, z))
     }
 
     private fun handleRequestLocationPluginMessage(player: Player, deserialized: RequestLocationPluginMessage) {

@@ -28,6 +28,8 @@ permissions:
   - bungeecord.command.reload
   - portals.check
   - portals.create
+  - portals.cleanup
+  - portals.cleanup.notify
   - portals.debug
   - portals.info
   - portals.link
