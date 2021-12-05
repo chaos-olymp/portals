@@ -13,10 +13,8 @@ import net.md_5.bungee.config.Configuration
 import net.md_5.bungee.config.ConfigurationProvider
 import net.md_5.bungee.config.YamlConfiguration
 import java.io.File
-import java.sql.Date
 
-class BungeePlugin(): Plugin() {
-
+class BungeePlugin: Plugin() {
     lateinit var portalManager: PortalManager
     lateinit var messageConfiguration: MessageConfiguration
     lateinit var pluginMessageListener: PluginMessageListener
@@ -25,6 +23,7 @@ class BungeePlugin(): Plugin() {
     internal lateinit var exceptionHandler: ExceptionHandler
     internal lateinit var databaseConfiguration: DatabaseConfiguration
     internal lateinit var cachingConfiguration: CacheConfiguration
+
     private lateinit var databaseService: DatabaseService
 
     override fun onEnable() {
@@ -128,6 +127,8 @@ class BungeePlugin(): Plugin() {
 
         }
 
-        databaseService = DatabaseService(HikariDatabaseProvider(databaseConfiguration.dataSource))
+        databaseService = DatabaseService(HikariDatabaseProvider(databaseConfiguration.dataSource)) { sql ->
+            DebugMessenger.verbose("SQL Statement Preparation", sql)
+        }
     }
 }

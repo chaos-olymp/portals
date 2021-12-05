@@ -1,8 +1,8 @@
 package de.chaosolymp.portals.bukkit.extensions
 
 import com.google.common.io.ByteStreams
-import de.chaosolymp.portals.core.messages.AbstractPluginMessage
-import de.chaosolymp.portals.core.messages.generated.serialize
+import de.chaosolymp.portals.core.message.AbstractPluginMessage
+import de.chaosolymp.portals.core.message.generated.serialize
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
 

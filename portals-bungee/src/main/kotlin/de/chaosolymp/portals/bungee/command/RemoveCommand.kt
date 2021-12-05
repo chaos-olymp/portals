@@ -11,7 +11,7 @@ class RemoveCommand(private val plugin: BungeePlugin) : SubCommand {
     override fun execute(sender: CommandSender, args: Array<out String>?) {
         // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.remove")) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-permission"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
             return
         }
 
@@ -22,7 +22,7 @@ class RemoveCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Send message if the portal does not exist
         if (!plugin.portalManager.doesNameOrIdExist(portal)) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.not-exists"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.not-exists"))
             return
         }
 
@@ -36,7 +36,7 @@ class RemoveCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Send message if the player has no access to the portal
         if (!plugin.portalManager.doesPlayerOwnPortalOrHasOtherAccess(sender, id)) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-access-to-portal"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-access-to-portal"))
             return
         }
 
@@ -57,7 +57,7 @@ class RemoveCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Send success message
         sender.sendMessage(
-            this.plugin.messageConfiguration.getMessage(
+            plugin.messageConfiguration.getMessage(
                 "command.remove",
                 Replacement("id", id),
                 Replacement(

@@ -1,8 +1,8 @@
 package de.chaosolymp.portals.bungee.extension
 
 import com.google.common.io.ByteStreams
-import de.chaosolymp.portals.core.messages.AbstractPluginMessage
-import de.chaosolymp.portals.core.messages.generated.serialize
+import de.chaosolymp.portals.core.message.AbstractPluginMessage
+import de.chaosolymp.portals.core.message.generated.serialize
 import net.md_5.bungee.api.connection.Server
 
 @Suppress("UnstableApiUsage")

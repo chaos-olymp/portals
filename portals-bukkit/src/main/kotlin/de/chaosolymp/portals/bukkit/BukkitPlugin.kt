@@ -7,8 +7,9 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin
 import de.chaosolymp.portals.bukkit.extensions.sendPluginMessage
 import de.chaosolymp.portals.bukkit.listener.PluginCommunicationListener
 import de.chaosolymp.portals.bukkit.listener.PortalListener
-import de.chaosolymp.portals.core.messages.server_to_proxy.AuthorizeTeleportRequestPluginMessage
-import de.chaosolymp.portals.core.messages.server_to_proxy.ValidationPluginMessage
+import de.chaosolymp.portals.core.message.server_to_proxy.AuthorizeTeleportRequestPluginMessage
+import de.chaosolymp.portals.core.message.server_to_proxy.RemovePortalPluginMessage
+import de.chaosolymp.portals.core.message.server_to_proxy.ValidationPluginMessage
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.ComponentBuilder
 import org.bukkit.Location
@@ -137,7 +138,7 @@ class BukkitPlugin: JavaPlugin {
             ?.isOwnerOfAll(WorldGuardPlugin.inst().wrapPlayer(player))!!
     }
 
-    fun isValidPortal(player: Player, location: Location): Boolean {
+    fun isValidPortal(player: Player, location: Location): CompletableFuture<Boolean> {
         val world = location.world!!.name
         val x = location.blockX
         val y = location.blockY
@@ -150,6 +151,17 @@ class BukkitPlugin: JavaPlugin {
         player.sendPluginMessage(this, outgoingMessage)
         logger.info("Wrote outgoing message: $outgoingMessage")
 
-        return future.get()
+        return future
+    }
+
+    internal fun removePortal(player: Player, location: Location) {
+        val world = location.world!!.name
+        val x = location.blockX
+        val y = location.blockY
+        val z = location.blockZ
+
+        val outgoingMessage = RemovePortalPluginMessage(player.uniqueId, world, x, y, z)
+        player.sendPluginMessage(this, outgoingMessage)
+        logger.info("Wrote outgoing message: $outgoingMessage")
     }
 }

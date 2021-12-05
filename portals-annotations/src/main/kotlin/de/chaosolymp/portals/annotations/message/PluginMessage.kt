@@ -1,4 +1,4 @@
-package de.chaosolymp.portals.annotations.messages
+package de.chaosolymp.portals.annotations.message
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.CLASS)

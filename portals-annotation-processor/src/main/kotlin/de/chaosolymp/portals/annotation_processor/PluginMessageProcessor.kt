@@ -2,7 +2,7 @@ package de.chaosolymp.portals.annotation_processor
 
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.*
-import de.chaosolymp.portals.annotations.messages.PluginMessage
+import de.chaosolymp.portals.annotations.message.PluginMessage
 import java.io.File
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
@@ -14,7 +14,7 @@ import javax.tools.Diagnostic
 
 @AutoService(Processor::class) // For registering the service
 @SupportedSourceVersion(SourceVersion.RELEASE_16) // to support Java 16
-@SupportedAnnotationTypes("de.chaosolymp.portals.annotations.messages.PluginMessage")
+@SupportedAnnotationTypes("de.chaosolymp.portals.annotations.message.PluginMessage")
 @SupportedOptions(PluginMessageProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
 class PluginMessageProcessor : AbstractProcessor() {
 
@@ -28,7 +28,7 @@ class PluginMessageProcessor : AbstractProcessor() {
         }
 
         val file = File(generatedSourcesRoot).apply { mkdir() }
-        val fileBuilder = FileSpec.builder("de.chaosolymp.portals.core.messages.generated", "PluginMessageGenerated")
+        val fileBuilder = FileSpec.builder("de.chaosolymp.portals.core.message.generated", "PluginMessageGenerated")
 
         fileBuilder.addComment(
             """
@@ -67,7 +67,7 @@ class PluginMessageProcessor : AbstractProcessor() {
         val serializeFuncBuilder = FunSpec
             .builder("serialize")
             .addModifiers(KModifier.PUBLIC)
-            .addParameter("message", ClassName("de.chaosolymp.portals.core.messages", "AbstractPluginMessage"))
+            .addParameter("message", ClassName("de.chaosolymp.portals.core.message", "AbstractPluginMessage"))
             .addParameter("output", ClassName("java.io", "DataOutput"))
 
         for((i, element) in alreadyProcessedElements.withIndex()) {
@@ -84,7 +84,7 @@ class PluginMessageProcessor : AbstractProcessor() {
         val deserializeFuncBuilder = FunSpec.builder("deserialize")
             .addModifiers(KModifier.PUBLIC)
             .addParameter("input", ClassName("java.io", "DataInput"))
-            .returns(ClassName("de.chaosolymp.portals.core.messages", "AbstractPluginMessage").asNullable())
+            .returns(ClassName("de.chaosolymp.portals.core.message", "AbstractPluginMessage").asNullable())
 
         deserializeFuncBuilder.addStatement("val identifier = input.readUTF()")
         for((i, element) in alreadyProcessedElements.withIndex()) {

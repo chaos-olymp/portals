@@ -1,4 +1,4 @@
-prevent_proxy_connections: false
+server_connect_timeout: 5000
 listeners:
 - query_port: 25565
   motd: '&6ChaosOlymp Test Server'
@@ -28,6 +28,7 @@ permissions:
   - bungeecord.command.reload
   - portals.check
   - portals.create
+  - portals.debug
   - portals.info
   - portals.link
   - portals.list
@@ -37,7 +38,7 @@ permissions:
   - portals.remove
 log_pings: true
 connection_throttle_limit: 3
-server_connect_timeout: 5000
+prevent_proxy_connections: false
 timeout: 30000
 player_limit: -1
 ip_forward: true

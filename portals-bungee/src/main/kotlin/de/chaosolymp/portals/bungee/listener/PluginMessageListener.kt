@@ -1,12 +1,13 @@
 package de.chaosolymp.portals.bungee.listener
 
 import com.google.common.io.ByteStreams
-import de.chaosolymp.portals.core.messages.generated.deserialize
+import de.chaosolymp.portals.core.message.generated.deserialize
 import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.bungee.extension.sendData
 import de.chaosolymp.portals.core.*
-import de.chaosolymp.portals.core.messages.proxy_to_server.*
-import de.chaosolymp.portals.core.messages.server_to_proxy.*
+import de.chaosolymp.portals.core.message.proxy_to_server.*
+import de.chaosolymp.portals.core.message.server_to_proxy.*
+import net.md_5.bungee.api.config.ServerInfo
 import net.md_5.bungee.api.connection.Connection
 import net.md_5.bungee.api.connection.ProxiedPlayer
 import net.md_5.bungee.api.event.PluginMessageEvent
@@ -27,7 +28,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
             map[deserialized.uuid]?.complete(LocationResponse(deserialized.canCreatePortal, deserialized.world, deserialized.x, deserialized.y, deserialized.z))
             map.remove(deserialized.uuid)
         } else {
-            this.plugin.proxy.logger.warning("${connection.socketAddress} sent location request for non-requested uuid ${deserialized.uuid}.")
+            plugin.proxy.logger.warning("${connection.socketAddress} sent location request for non-requested uuid ${deserialized.uuid}.")
         }
     }
 
@@ -35,25 +36,25 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
         val player = plugin.proxy.getPlayer(deserialized.uuid)
         val server = player.server.info.name
 
-        val id = this.plugin.portalManager.getPortalIdAt(server, deserialized.world, deserialized.x, deserialized.y, deserialized.z)
+        val id = plugin.portalManager.getPortalIdAt(server, deserialized.world, deserialized.x, deserialized.y, deserialized.z)
         if (id == null) {
             plugin.logger.warning("Caught invalid teleportation - World: ${deserialized.world} X: ${deserialized.x} Y: ${deserialized.y} Z: ${deserialized.z}")
             return
         }
 
-        val link = this.plugin.portalManager.getPortalLink(id)
+        val link = plugin.portalManager.getPortalLink(id)
         if(link == null) {
             plugin.logger.warning("Cannot perform teleportation because portal #${id} is not linked")
             return
         }
 
-        val portal = this.plugin.portalManager.getPortal(link)
+        val portal = plugin.portalManager.getPortal(link)
         if(portal == null) {
             plugin.logger.warning("Not expected behavior: Portal #${id} is linked to #${link} but #${link} is not present in database")
             return
         }
 
-        val serverInfo = this.plugin.proxy.getServerInfo(portal.server)
+        val serverInfo = plugin.proxy.getServerInfo(portal.server)
         if (portal.server != server) {
             player.connect(serverInfo)
             plugin.logger.info("Sent player ${player.name} (${player.uniqueId}) to ${serverInfo.name}")
@@ -91,6 +92,16 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
         }
     }
 
+    private fun handleRemovePortalPluginMessage(deserialized: RemovePortalPluginMessage) {
+        val player = plugin.proxy.getPlayer(deserialized.player)
+        val server = player.server.info.name
+
+        val portalId = plugin.portalManager.getPortalIdAt(server, deserialized.world, deserialized.x, deserialized.y, deserialized.z)
+        if(portalId != null) {
+            plugin.portalManager.remove(portalId)
+        }
+    }
+
     @EventHandler
     @Suppress("UnstableApiUsage")
     fun handlePluginMessage(event: PluginMessageEvent) {
@@ -112,6 +123,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
             is BlockChangeAcceptancePluginMessage -> handleBlockChangeAcceptancePluginMessage(deserialized, event.sender)
             is ValidationPluginMessage -> handleValidationPluginMessage(deserialized)
             is ServerInformationResponsePluginMessage -> handleServerInformationResponsePluginMessage(deserialized)
+            is RemovePortalPluginMessage -> handleRemovePortalPluginMessage(deserialized)
             else -> plugin.logger.warning("Unknown incoming plugin message")
         }
     }

@@ -26,7 +26,7 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
         // Validate argument count
         if (args == null || args.size != 2) {
             sender.sendMessage(
-                this.plugin.messageConfiguration.getMessage(
+                plugin.messageConfiguration.getMessage(
                     "error.wrong-syntax",
                     Replacement("syntax", "/portal link <origin> <link>")
                 )

@@ -1,9 +1,9 @@
 package de.chaosolymp.portals.core
 
 import com.google.common.io.ByteStreams
-import de.chaosolymp.portals.core.messages.AbstractPluginMessage
-import de.chaosolymp.portals.core.messages.generated.deserialize
-import de.chaosolymp.portals.core.messages.generated.serialize
+import de.chaosolymp.portals.core.message.AbstractPluginMessage
+import de.chaosolymp.portals.core.message.generated.deserialize
+import de.chaosolymp.portals.core.message.generated.serialize
 import org.junit.experimental.theories.DataPoints
 import org.junit.experimental.theories.Theories
 import org.junit.experimental.theories.Theory

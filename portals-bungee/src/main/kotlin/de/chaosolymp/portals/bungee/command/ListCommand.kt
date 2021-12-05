@@ -17,7 +17,7 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
     override fun execute(sender: CommandSender, args: Array<out String>?) {
         // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.list")) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-permission"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
             return
         }
 
@@ -36,7 +36,7 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
             if (sender.hasPermission("portals.list.all")) {
                 mode = PortalListType.ALL
             } else {
-                sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-permission"))
+                sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
                 return
             }
         }
@@ -46,14 +46,14 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
             if (sender.hasPermission("portals.list.public")) {
                 mode = PortalListType.PUBLIC
             } else {
-                sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-permission"))
+                sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
                 return
             }
         }
 
         // Send message if no valid page provided
         if (page == 0) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.pagination.unknown-number"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.pagination.unknown-number"))
             return
         }
 
@@ -62,13 +62,13 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Send message if page is out of range
         if (maxCount > count) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.pagination.not-exists"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.pagination.not-exists"))
             return
         }
 
         val skip = maxCount - itemsPerPage
         val maxPages: Int = count / itemsPerPage // we don't want a Double -> Int
-        val result = this.plugin.portalManager.getPortals(sender, mode, skip, itemsPerPage)
+        val result = plugin.portalManager.getPortals(sender, mode, skip, itemsPerPage)
 
         // Send header component
         sender.sendMessage(
@@ -82,34 +82,34 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
         // Create click-event navigation
         val badgeBuilder = ComponentBuilder()
         if (sender.hasPermission("portals.list.all") && mode != PortalListType.ALL) {
-            val badge = this.plugin.messageConfiguration.getMessage("messages.command.list.badge.all.text")
+            val badge = plugin.messageConfiguration.getMessage("messages.command.list.badge.all.text")
             badge.forEach {
                 it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portals list $page -all")
                 it.hoverEvent = HoverEvent(
                     HoverEvent.Action.SHOW_TEXT,
-                    Text(this.plugin.messageConfiguration.getMessage("messages.command.list.badge.all.hover"))
+                    Text(plugin.messageConfiguration.getMessage("messages.command.list.badge.all.hover"))
                 )
             }
             badgeBuilder.append(badge)
             badgeBuilder.append(" ")
         } else if (sender.hasPermission("portals.list.public") && mode != PortalListType.ALL) {
-            val badge = this.plugin.messageConfiguration.getMessage("messages.command.list.badge.public.text")
+            val badge = plugin.messageConfiguration.getMessage("messages.command.list.badge.public.text")
             badge.forEach {
                 it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portals list $page -public")
                 it.hoverEvent = HoverEvent(
                     HoverEvent.Action.SHOW_TEXT,
-                    Text(this.plugin.messageConfiguration.getMessage("messages.command.list.badge.public.hover"))
+                    Text(plugin.messageConfiguration.getMessage("messages.command.list.badge.public.hover"))
                 )
             }
             badgeBuilder.append(badge)
             badgeBuilder.append(" ")
         } else if (mode != PortalListType.OWN) {
-            val badge = this.plugin.messageConfiguration.getMessage("messages.command.list.badge.own.text")
+            val badge = plugin.messageConfiguration.getMessage("messages.command.list.badge.own.text")
             badge.forEach {
                 it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portals list $page")
                 it.hoverEvent = HoverEvent(
                     HoverEvent.Action.SHOW_TEXT,
-                    Text(this.plugin.messageConfiguration.getMessage("messages.command.list.badge.own.hover"))
+                    Text(plugin.messageConfiguration.getMessage("messages.command.list.badge.own.hover"))
                 )
             }
             badgeBuilder.append(badge)
@@ -118,14 +118,14 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
 
         result.forEach { portal ->
             // Create list component
-            val component = this.plugin.messageConfiguration.getMessage(
+            val component = plugin.messageConfiguration.getMessage(
                 "command.list.component",
                 Replacement("name", portal.name),
                 Replacement("display-name", portal.displayName ?: portal.name),
                 Replacement("id", portal.id),
                 Replacement(
                     "owner",
-                    (this.plugin.proxy.getPlayer(portal.owner) ?: portal.owner.toString())
+                    (plugin.proxy.getPlayer(portal.owner) ?: portal.owner.toString())
                 ), // If player name cannot be retrieved it prints the uuid
                 Replacement("public", if (portal.public) "✓" else "×"),
                 Replacement("created", portal.created.toString()),
@@ -137,7 +137,7 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
                 it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portals info ${portal.id}")
                 it.hoverEvent = HoverEvent(
                     HoverEvent.Action.SHOW_TEXT,
-                    Text(this.plugin.messageConfiguration.getMessage("command.list.hover"))
+                    Text(plugin.messageConfiguration.getMessage("command.list.hover"))
                 )
             }
 
@@ -167,7 +167,7 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Send list footer
         sender.sendMessage(
-            this.plugin.messageConfiguration.getMessage(
+            plugin.messageConfiguration.getMessage(
                 "command.list.footer",
                 Replacement("current-page", page),
                 Replacement("max-pages", maxPages)

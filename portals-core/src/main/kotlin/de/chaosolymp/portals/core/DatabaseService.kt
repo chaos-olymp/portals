@@ -1,20 +1,25 @@
 package de.chaosolymp.portals.core
 
-import de.chaosolymp.portals.core.extensions.getUUID
+import de.chaosolymp.portals.core.extension.getUUID
+import de.chaosolymp.portals.core.extension.prepareAndLogStatement
 import java.sql.Statement
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.*
 
-class DatabaseService(private val databaseProvider: DatabaseProvider) {
+class DatabaseService(
+    private val databaseProvider: DatabaseProvider,
+    private val callback: PrepareStatementCallback? = null
+) {
 
     private val regex = Regex("^[a-z_]+")
 
     fun createTable() {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                     CREATE TABLE IF NOT EXISTS `portals` (
                     	`id` INT unsigned NOT NULL AUTO_INCREMENT,
                     	`owner` BINARY(16) DEFAULT NULL,
@@ -32,7 +37,7 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                     	PRIMARY KEY (`id`, `name`)
                     )
                 """.trimIndent()
-                    )
+                )
             stmt.execute()
         }
     }
@@ -42,13 +47,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun doesNameExist(name: String): Boolean {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT COUNT(name) 
                 FROM `portals` 
                 WHERE name = ?
             """.trimIndent()
-                    )
+                )
             stmt.setString(1, name)
             val rs = stmt.executeQuery()
             return if (rs.next()) {
@@ -60,24 +66,25 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     }
 
     fun createPortal(
-            owner: UUID,
-            name: String,
-            server: String,
-            public: Boolean,
-            world: String,
-            x: Int,
-            y: Int,
-            z: Int
+        owner: UUID,
+        name: String,
+        server: String,
+        public: Boolean,
+        world: String,
+        x: Int,
+        y: Int,
+        z: Int
     ): Int? {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 INSERT INTO `portals` (owner, name, public, created, server, world, x, y, z) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
-                        Statement.RETURN_GENERATED_KEYS
-                    )
+                    Statement.RETURN_GENERATED_KEYS
+                )
             stmt.setBytes(1, UUIDUtils.getBytesFromUUID(owner))
             stmt.setString(2, name)
             stmt.setBoolean(3, public)
@@ -104,13 +111,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun setPublic(id: Int, public: Boolean) {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 UPDATE `portals` 
                 SET public = ? 
                 WHERE id = ?
             """.trimIndent()
-                    )
+                )
             stmt.setBoolean(1, public)
             stmt.setInt(2, id)
             stmt.execute()
@@ -120,13 +128,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun setPublic(name: String, public: Boolean) {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 UPDATE `portals` 
                 SET public = ? 
                 WHERE name = ?
             """.trimIndent()
-                    )
+                )
             stmt.setBoolean(1, public)
             stmt.setString(2, name)
             stmt.execute()
@@ -136,8 +145,9 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun getPortal(id: Int): Portal? {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT 
                     owner, 
                     name, 
@@ -154,7 +164,7 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                 FROM `portals` 
                 WHERE id = ?
             """.trimIndent()
-                    )
+                )
             stmt.setInt(1, id)
             val rs = stmt.executeQuery()
 
@@ -176,19 +186,19 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                 }
 
                 return Portal(
-                        id,
-                        uuid,
-                        name,
-                        displayName,
-                        public,
-                        created,
-                        updated,
-                        server,
-                        world,
-                        x,
-                        y,
-                        z,
-                        link
+                    id,
+                    uuid,
+                    name,
+                    displayName,
+                    public,
+                    created,
+                    updated,
+                    server,
+                    world,
+                    x,
+                    y,
+                    z,
+                    link
                 )
             } else {
                 return null
@@ -199,8 +209,9 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun getPortal(name: String): Portal? {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT 
                     id, 
                     owner, 
@@ -217,7 +228,7 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                 FROM `portals` 
                 WHERE name = ?
             """.trimIndent()
-                    )
+                )
             stmt.setString(1, name)
             val rs = stmt.executeQuery()
 
@@ -239,19 +250,19 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                 }
 
                 return Portal(
-                        id,
-                        uuid,
-                        name,
-                        displayName,
-                        public,
-                        created,
-                        updated,
-                        server,
-                        world,
-                        x,
-                        y,
-                        z,
-                        link
+                    id,
+                    uuid,
+                    name,
+                    displayName,
+                    public,
+                    created,
+                    updated,
+                    server,
+                    world,
+                    x,
+                    y,
+                    z,
+                    link
                 )
             } else {
                 return null
@@ -262,23 +273,25 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun remove(id: Int) {
         databaseProvider.useConnection {
             val unlinkStmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 UPDATE `portals` 
                 SET `link` = NULL 
                 WHERE link = ?
             """.trimIndent()
-                    )
+                )
             unlinkStmt.setInt(1, id)
             unlinkStmt.execute()
 
             val deleteStmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 DELETE FROM `portals` 
                 WHERE id = ?
             """.trimIndent()
-                    )
+                )
             deleteStmt.setInt(1, id)
             deleteStmt.execute()
         }
@@ -287,8 +300,9 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun remove(name: String) {
         databaseProvider.useConnection {
             val unlinkStmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 UPDATE `portals` 
                 SET `link` = NULL 
                 WHERE link = (SELECT id FROM (
@@ -298,18 +312,18 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                                              ) AS portals_table WHERE name = ? LIMIT 1
                              )
             """.trimIndent()
-                    )
+                )
             unlinkStmt.setString(1, name)
             unlinkStmt.setString(2, name)
             unlinkStmt.execute()
 
             val deleteStmt =
-                    it.prepareStatement(
-                            """
+                it.prepareStatement(
+                    """
                 DELETE FROM `portals` 
                 WHERE name = ?
             """.trimIndent()
-                    )
+                )
             deleteStmt.setString(1, name)
             deleteStmt.execute()
         }
@@ -318,13 +332,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun getIdOfName(name: String): Int {
         databaseProvider.useConnection {
             val query =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT id 
                 FROM `portals` 
                 WHERE name = ?
             """.trimIndent()
-                    )
+                )
             query.setString(1, name)
             val rs = query.executeQuery()
             rs.next()
@@ -335,13 +350,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun link(originId: Int, linkId: Int) {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 UPDATE `portals` 
                 SET link = ? 
                 WHERE id = ?
             """.trimIndent()
-                    )
+                )
             stmt.setInt(1, linkId)
             stmt.setInt(2, originId)
             stmt.execute()
@@ -351,13 +367,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun rename(id: Int, name: String) {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 UPDATE `portals` 
                 SET name = ? 
                 WHERE id = ?
             """.trimIndent()
-                    )
+                )
             stmt.setString(1, name)
             stmt.setInt(2, id)
             stmt.execute()
@@ -367,13 +384,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun setDisplayName(id: Int, name: String) {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 UPDATE `portals` 
                 SET display_name = ? 
                 WHERE id = ?
             """.trimIndent()
-                    )
+                )
             stmt.setString(1, name)
             stmt.setInt(2, id)
             stmt.execute()
@@ -383,13 +401,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun isPublic(id: Int): Boolean {
         databaseProvider.useConnection {
             val query =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT `public` 
                 FROM `portals` 
                 WHERE id = ?
             """.trimIndent()
-                    )
+                )
             query.setInt(1, id)
             val rs = query.executeQuery()
             rs.next()
@@ -400,14 +419,15 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun doesPlayerOwnPortal(player: UUID, id: Int): Boolean {
         databaseProvider.useConnection {
             val query =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT COUNT(*) 
                 FROM `portals` 
                 WHERE owner = ? 
                 AND id = ?
             """.trimIndent()
-                    )
+                )
             query.setBytes(1, UUIDUtils.getBytesFromUUID(player))
             query.setInt(2, id)
             val rs = query.executeQuery()
@@ -419,13 +439,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun getNameOfId(id: Int): String {
         databaseProvider.useConnection {
             val query =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT name 
                 FROM `portals` 
                 WHERE id = ?
             """.trimIndent()
-                    )
+                )
             query.setInt(1, id)
             val rs = query.executeQuery()
             rs.next()
@@ -436,12 +457,13 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun countPortals(): Int {
         databaseProvider.useConnection {
             val query =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT COUNT(*)
                 FROM `portals`
             """.trimIndent()
-                    )
+                )
             val rs = query.executeQuery()
             rs.next()
             return rs.getInt(1)
@@ -458,7 +480,7 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
 
     fun getDbTime(): Instant {
         databaseProvider.useConnection {
-            val stmt = it.prepareStatement("SELECT UNIX_TIMESTAMP()")
+            val stmt = it.prepareAndLogStatement(callback, "SELECT UNIX_TIMESTAMP()")
 
             val rs = stmt.executeQuery()
             return if (rs.next()) {
@@ -473,13 +495,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun doesIdExists(id: Int): Boolean {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT COUNT(*) 
                 FROM `portals` 
                 WHERE id = ?
             """.trimIndent()
-                    )
+                )
             stmt.setInt(1, id)
             val rs = stmt.executeQuery()
             return if (rs.next()) {
@@ -491,17 +514,18 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     }
 
     fun getPortals(
-            sender: UUID?,
-            listType: PortalListType,
-            skip: Int,
-            count: Int
+        sender: UUID?,
+        listType: PortalListType,
+        skip: Int,
+        count: Int
     ): Iterable<Portal> {
         val stmt =
-                if (sender != null && listType == PortalListType.OWN) {
-                    databaseProvider.useConnection {
-                        val stmt =
-                                it.prepareStatement(
-                                        """
+            if (sender != null && listType == PortalListType.OWN) {
+                databaseProvider.useConnection {
+                    val stmt =
+                        it.prepareAndLogStatement(
+                            callback,
+                            """
                     SELECT 
                         id, 
                         name, 
@@ -520,17 +544,18 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                     WHERE owner = ?
                     LIMIT ?, ? 
                 """.trimIndent()
-                                )
-                        stmt.setInt(1, skip)
-                        stmt.setInt(2, skip + count)
-                        stmt.setBytes(3, UUIDUtils.getBytesFromUUID(sender))
-                        return@useConnection stmt
-                    }
-                } else if (listType == PortalListType.PUBLIC) {
-                    databaseProvider.useConnection {
-                        val stmt =
-                                it.prepareStatement(
-                                        """
+                        )
+                    stmt.setInt(1, skip)
+                    stmt.setInt(2, skip + count)
+                    stmt.setBytes(3, UUIDUtils.getBytesFromUUID(sender))
+                    return@useConnection stmt
+                }
+            } else if (listType == PortalListType.PUBLIC) {
+                databaseProvider.useConnection {
+                    val stmt =
+                        it.prepareAndLogStatement(
+                            callback,
+                            """
                     SELECT 
                         id, 
                         name, 
@@ -549,16 +574,17 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                     WHERE public = TRUE
                     LIMIT ?, ? 
                 """.trimIndent()
-                                )
-                        stmt.setInt(1, skip)
-                        stmt.setInt(2, skip + count)
-                        return@useConnection stmt
-                    }
-                } else {
-                    databaseProvider.useConnection {
-                        val stmt =
-                                it.prepareStatement(
-                                        """
+                        )
+                    stmt.setInt(1, skip)
+                    stmt.setInt(2, skip + count)
+                    return@useConnection stmt
+                }
+            } else {
+                databaseProvider.useConnection {
+                    val stmt =
+                        it.prepareAndLogStatement(
+                            callback,
+                            """
                     SELECT 
                         id, 
                         name, 
@@ -576,12 +602,12 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                     FROM `portals` 
                     LIMIT ?, ?
                 """.trimIndent()
-                                )
-                        stmt.setInt(1, skip)
-                        stmt.setInt(2, skip + count)
-                        return@useConnection stmt
-                    }
+                        )
+                    stmt.setInt(1, skip)
+                    stmt.setInt(2, skip + count)
+                    return@useConnection stmt
                 }
+            }
         val list = mutableListOf<Portal>()
         val rs = stmt.executeQuery()
         while (rs.next()) {
@@ -603,21 +629,21 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
             }
 
             list.add(
-                    Portal(
-                            id,
-                            uuid,
-                            name,
-                            displayName,
-                            public,
-                            created,
-                            updated,
-                            server,
-                            world,
-                            x,
-                            y,
-                            z,
-                            link
-                    )
+                Portal(
+                    id,
+                    uuid,
+                    name,
+                    displayName,
+                    public,
+                    created,
+                    updated,
+                    server,
+                    world,
+                    x,
+                    y,
+                    z,
+                    link
+                )
             )
         }
 
@@ -627,8 +653,9 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun getPortalIdAt(server: String, world: String, x: Int, y: Int, z: Int): Int? {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT id 
                 FROM `portals` 
                 WHERE server = ? 
@@ -637,7 +664,7 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
                     AND y = ? 
                     AND z = ?
             """.trimIndent()
-                    )
+                )
             stmt.setString(1, server)
             stmt.setString(2, world)
             stmt.setInt(3, x)
@@ -657,13 +684,14 @@ class DatabaseService(private val databaseProvider: DatabaseProvider) {
     fun getPortalLink(id: Int): Int? {
         databaseProvider.useConnection {
             val stmt =
-                    it.prepareStatement(
-                            """
+                it.prepareAndLogStatement(
+                    callback,
+                    """
                 SELECT link 
                 FROM `portals` 
                 WHERE id = ?
             """.trimIndent()
-                    )
+                )
             stmt.setInt(1, id)
             val rs = stmt.executeQuery()
             rs.next()

@@ -1,6 +1,7 @@
 package de.chaosolymp.portals.bungee.command
 
 import de.chaosolymp.portals.bungee.BungeePlugin
+import de.chaosolymp.portals.bungee.DebugMessenger
 import de.chaosolymp.portals.bungee.extension.sendMessage
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.plugin.Command
@@ -10,21 +11,25 @@ class PortalCommand(private val plugin: BungeePlugin) : Command("portal") {
     internal val commandRegistry = mutableMapOf<String, SubCommand>()
 
     init {
-        commandRegistry["create"] = CreateCommand(this.plugin)
-        commandRegistry["link"] = LinkCommand(this.plugin)
-        commandRegistry["list"] = ListCommand(this.plugin)
-        commandRegistry["modify"] = ModifyCommand(this.plugin)
-        commandRegistry["info"] = InfoCommand(this.plugin)
-        commandRegistry["remove"] = RemoveCommand(this.plugin)
-        commandRegistry["check"] = CheckCommand(this.plugin)
-        commandRegistry["help"] = HelpCommand(this.plugin, this)
+        commandRegistry["create"] = CreateCommand(plugin)
+        commandRegistry["debug"] = DebugCommand(plugin)
+        commandRegistry["link"] = LinkCommand(plugin)
+        commandRegistry["list"] = ListCommand(plugin)
+        commandRegistry["modify"] = ModifyCommand(plugin)
+        commandRegistry["info"] = InfoCommand(plugin)
+        commandRegistry["remove"] = RemoveCommand(plugin)
+        commandRegistry["check"] = CheckCommand(plugin)
+        commandRegistry["help"] = HelpCommand(plugin, this)
     }
 
     override fun execute(sender: CommandSender, args: Array<out String>) {
         try {
+            DebugMessenger.info("Command Execution", "${sender.name} executed /portal ${args.joinToString(" ")}")
+
             val cmd = if(args.isNotEmpty()) {
                 commandRegistry[args[0]] ?: commandRegistry["help"]
             } else {
+                sender.sendMessage(plugin.messageConfiguration.getMessage("messages.error.subcommand-not-exists"))
                 commandRegistry["help"]
             }
 
@@ -32,6 +37,7 @@ class PortalCommand(private val plugin: BungeePlugin) : Command("portal") {
         } catch (ex: Exception) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("messages.error.exception-occurred"))
             plugin.exceptionHandler.uncaughtException(Thread.currentThread(), ex)
+            DebugMessenger.exception("Command Execution", ex)
         }
     }
 

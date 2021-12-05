@@ -22,7 +22,7 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
     
     fun createPortal(owner: UUID, name: String, server: String, public: Boolean, world: String, x: Int, y: Int, z: Int): Int? {
         // Call event for external listeners
-        val event = PortalCreateEvent()
+        val event = PortalCreateEvent(owner, name, server, public, world, x, y, z)
         plugin.proxy.pluginManager.callEvent(event)
 
         if(event.isCancelled) {

@@ -12,7 +12,7 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
     override fun execute(sender: CommandSender, args: Array<out String>?) {
         // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.create")) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-permission"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
             return
         }
 
@@ -20,7 +20,7 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
         // We need this, because we require a Location of the player
         // The console is not able to provide a Location
         if (sender !is ProxiedPlayer) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.not-a-player"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.not-a-player"))
             return
         }
 
@@ -37,14 +37,14 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Validate name conventions
         val name = args[0]
-        if (!this.plugin.portalManager.isNameValid(name)) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.wrong-name"))
+        if (!plugin.portalManager.isNameValid(name)) {
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.wrong-name"))
             return
         }
 
         // Send error message if this portal name is already present in database
-        if (this.plugin.portalManager.doesNameExist(name)) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.name-already-exists"))
+        if (plugin.portalManager.doesNameExist(name)) {
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.name-already-exists"))
             return
         }
 
@@ -54,12 +54,12 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
 
             // Send error message if player has no access to the region
             if (!it.canCreatePortal) {
-                sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-region-access"))
+                sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-region-access"))
                 return@thenAccept
             }
 
             // Create portal in database and use the generated id by AUTO_INCREMENT
-            val id = this.plugin.portalManager.createPortal(
+            val id = plugin.portalManager.createPortal(
                 sender.uniqueId,
                 name,
                 sender.server.info.name,
@@ -73,7 +73,7 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
             // Send error if database returned a uncommon result (No id present)
             if (id == null) {
                 sender.sendMessage(
-                    this.plugin.messageConfiguration.getMessage(
+                    plugin.messageConfiguration.getMessage(
                         "error.database-error"
                     )
                 )
@@ -86,7 +86,7 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
             // Register callback on the future
             blockChangeFuture.thenAccept {
                 sender.sendMessage(
-                    this.plugin.messageConfiguration.getMessage(
+                    plugin.messageConfiguration.getMessage(
                         "command.create",
                         Replacement("name", name),
                         Replacement("id", id)
@@ -95,10 +95,10 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
             }
 
             // Send block change request to server
-            this.plugin.pluginMessageListener.sendBlockChange(sender, blockChangeFuture)
+            plugin.pluginMessageListener.sendBlockChange(sender, blockChangeFuture)
         }
 
         // Send request plugin message to the server
-        this.plugin.pluginMessageListener.requestLocation(sender, locationFuture)
+        plugin.pluginMessageListener.requestLocation(sender, locationFuture)
     }
 }

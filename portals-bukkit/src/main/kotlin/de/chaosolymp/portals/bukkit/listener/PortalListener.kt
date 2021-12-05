@@ -3,6 +3,7 @@ package de.chaosolymp.portals.bukkit.listener
 import de.chaosolymp.portals.bukkit.BukkitPlugin
 import de.chaosolymp.portals.bukkit.PORTAL_MATERIAL
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.player.PlayerJoinEvent
@@ -52,12 +53,12 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
         plugin.teleport(event.player, block)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun handleBreakPortal(event: BlockBreakEvent) {
         // Disallow portal block breaking
-        if (event.block.type != PORTAL_MATERIAL || !plugin.isValidPortal(event.player, event.block.location)) return
+        if (event.block.type != PORTAL_MATERIAL) return
 
-        event.isCancelled = true
+        plugin.removePortal(event.player, event.block.location)
     }
 
     @EventHandler
