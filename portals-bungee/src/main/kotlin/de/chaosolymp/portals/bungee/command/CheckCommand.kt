@@ -96,15 +96,9 @@ class CheckCommand(private val plugin: BungeePlugin) : SubCommand {
                 return CheckResult(CheckResultType.Warning, "High latency: $latencyMillis")
             }
 
-            if(result.exceptionCount > 0) {
-                return CheckResult(CheckResultType.Fatal, "${result.exceptionCount} Exceptions occurred - Latency: $latencyMillis")
-            }
-
             return CheckResult(CheckResultType.Success, "Seems good - Latency: $latencyMillis")
         } catch(ex: Exception) {
             return CheckResult(CheckResultType.Fatal, "Response timeout of 5 seconds exceeded")
-        } finally {
-            plugin.pluginMessageListener.serverInformationResponse = null
         }
     }
 

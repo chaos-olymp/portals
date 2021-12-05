@@ -5,7 +5,6 @@ import de.chaosolymp.portals.bukkit.BukkitPlugin
 import de.chaosolymp.portals.bukkit.extensions.sendPluginMessage
 import de.chaosolymp.portals.core.messages.generated.deserialize
 import de.chaosolymp.portals.core.messages.proxy_to_server.*
-import de.chaosolymp.portals.core.messages.server_to_proxy.AuthorizeTeleportRequestPluginMessage
 import de.chaosolymp.portals.core.messages.server_to_proxy.BlockChangeAcceptancePluginMessage
 import de.chaosolymp.portals.core.messages.server_to_proxy.LocationResponsePluginMessage
 import de.chaosolymp.portals.core.messages.server_to_proxy.ServerInformationResponsePluginMessage
@@ -31,90 +30,101 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
         }
 
         when (deserialized) {
-            is RequestLocationPluginMessage -> {
-                val targetPlayer = plugin.server.getPlayer(deserialized.uuid) ?: return
-                val worldName = targetPlayer.world.name
-
-                val outgoingMessage = LocationResponsePluginMessage(
-                    deserialized.uuid,
-                    plugin.canCreatePortal(targetPlayer),
-                    worldName,
-                    targetPlayer.location.x.toInt(),
-                    targetPlayer.location.y.toInt(),
-                    targetPlayer.location.z.toInt()
-                )
-
-                player.sendPluginMessage(
-                    this.plugin, outgoingMessage
-                )
-                plugin.logger.info("Wrote outgoing message: $outgoingMessage")
-            }
-            is AuthorizeTeleportResponsePluginMessage -> {
-                val targetPlayer = plugin.server.getPlayer(deserialized.uuid)
-                val world = plugin.server.getWorld(deserialized.world)
-
-                val location =
-                    Location(world, deserialized.x.toDouble(), deserialized.y.toDouble() + 1, deserialized.z.toDouble())
-                targetPlayer?.teleport(location) ?: plugin.pendingTeleports.add(Pair(deserialized.uuid, location))
-            }
-            is BlockChangeRequestPluginMessage -> {
-                val targetPlayer = plugin.server.getPlayer(deserialized.uuid) ?: return
-                val blockLocation = targetPlayer.location
-                val block = blockLocation.world!!.getBlockAt(blockLocation)
-                block.setType(Material.END_PORTAL, false)
-
-                val outgoingMessage = BlockChangeAcceptancePluginMessage(deserialized.uuid)
-
-                player.sendPluginMessage(this.plugin, outgoingMessage)
-                plugin.logger.info("Wrote outgoing message: $outgoingMessage")
-            }
-            is BlockDestroyRequestPluginMessage -> {
-                val chunkX = deserialized.x shr 4
-                val chunkZ = deserialized.z shr 4
-
-                val world = plugin.server.getWorld(deserialized.world) ?: return
-                val chunk = world.getChunkAt(chunkX, chunkZ)
-
-                val loaded = chunk.isLoaded
-                if (!loaded) {
-                    chunk.load(true)
-                }
-
-                val block = world.getBlockAt(deserialized.x, deserialized.y, deserialized.z)
-                val stack = ItemStack(block.type, 1)
-                block.type = Material.AIR
-
-                world.dropItem(
-                    Location(
-                        world,
-                        deserialized.x.toDouble(),
-                        deserialized.y.toDouble(),
-                        deserialized.z.toDouble()
-                    ), stack
-                )
-
-                if (!loaded) {
-                    chunk.unload(true)
-                }
-            }
-            is ValidationResponsePluginMessage -> {
-                plugin.portalRequestMap[Pair(
-                    deserialized.worldName,
-                    Triple(deserialized.x, deserialized.y, deserialized.z)
-                )]?.complete(deserialized.valid)
-            }
-            is ServerInformationRequestPluginMessage -> {
-                val outgoingMessage = ServerInformationResponsePluginMessage(
-                    plugin.description.version,
-                    Instant.now().toEpochMilli(),
-                    plugin.exceptionHandler.exceptionCount
-                )
-                player.sendPluginMessage(
-                    this.plugin, outgoingMessage
-                )
-                plugin.logger.info("Wrote outgoing message: $outgoingMessage")
-            }
+            is RequestLocationPluginMessage -> handleRequestLocationPluginMessage(player, deserialized)
+            is AuthorizeTeleportResponsePluginMessage -> handleAuthorizeTeleportResponsePluginMessage(deserialized)
+            is BlockChangeRequestPluginMessage -> handleBlockChangeRequestPluginMessage(player, deserialized)
+            is BlockDestroyRequestPluginMessage -> handleBlockDestroyRequestPluginMessage(deserialized)
+            is ValidationResponsePluginMessage -> handleValidationResponsePluginMessage(deserialized)
+            is ServerInformationRequestPluginMessage -> handleServerInformationRequestPluginMessage(player)
             else -> plugin.logger.warning("Unknown incoming plugin message")
         }
+    }
+
+    private fun handleRequestLocationPluginMessage(player: Player, deserialized: RequestLocationPluginMessage) {
+        val targetPlayer = plugin.server.getPlayer(deserialized.uuid) ?: return
+        val worldName = targetPlayer.world.name
+
+        val outgoingMessage = LocationResponsePluginMessage(
+            deserialized.uuid,
+            plugin.canCreatePortal(targetPlayer),
+            worldName,
+            targetPlayer.location.x.toInt(),
+            targetPlayer.location.y.toInt(),
+            targetPlayer.location.z.toInt()
+        )
+
+        player.sendPluginMessage(
+            this.plugin, outgoingMessage
+        )
+        plugin.logger.info("Wrote outgoing message: $outgoingMessage")
+    }
+
+    private fun handleAuthorizeTeleportResponsePluginMessage(deserialized: AuthorizeTeleportResponsePluginMessage) {
+        val targetPlayer = plugin.server.getPlayer(deserialized.uuid)
+        val world = plugin.server.getWorld(deserialized.world)
+
+        val location =
+            Location(world, deserialized.x.toDouble(), deserialized.y.toDouble() + 1, deserialized.z.toDouble())
+        targetPlayer?.teleport(location) ?: plugin.pendingTeleports.add(Pair(deserialized.uuid, location))
+    }
+
+    private fun handleBlockChangeRequestPluginMessage(player: Player, deserialized: BlockChangeRequestPluginMessage) {
+        val targetPlayer = plugin.server.getPlayer(deserialized.uuid) ?: return
+        val blockLocation = targetPlayer.location
+        val block = blockLocation.world!!.getBlockAt(blockLocation)
+        block.setType(Material.END_PORTAL, false)
+
+        val outgoingMessage = BlockChangeAcceptancePluginMessage(deserialized.uuid)
+
+        player.sendPluginMessage(this.plugin, outgoingMessage)
+        plugin.logger.info("Wrote outgoing message: $outgoingMessage")
+    }
+
+    private fun handleBlockDestroyRequestPluginMessage(deserialized: BlockDestroyRequestPluginMessage) {
+        val chunkX = deserialized.x shr 4
+        val chunkZ = deserialized.z shr 4
+
+        val world = plugin.server.getWorld(deserialized.world) ?: return
+        val chunk = world.getChunkAt(chunkX, chunkZ)
+
+        val loaded = chunk.isLoaded
+        if (!loaded) {
+            chunk.load(true)
+        }
+
+        val block = world.getBlockAt(deserialized.x, deserialized.y, deserialized.z)
+        val stack = ItemStack(block.type, 1)
+        block.type = Material.AIR
+
+        world.dropItem(
+            Location(
+                world,
+                deserialized.x.toDouble(),
+                deserialized.y.toDouble(),
+                deserialized.z.toDouble()
+            ), stack
+        )
+
+        if (!loaded) {
+            chunk.unload(true)
+        }
+    }
+
+    private fun handleValidationResponsePluginMessage(deserialized: ValidationResponsePluginMessage) {
+        plugin.portalRequestMap[Pair(
+            deserialized.worldName,
+            Triple(deserialized.x, deserialized.y, deserialized.z)
+        )]?.complete(deserialized.valid)
+    }
+
+    private fun handleServerInformationRequestPluginMessage(player: Player) {
+        val outgoingMessage = ServerInformationResponsePluginMessage(
+            plugin.description.version,
+            Instant.now().toEpochMilli()
+        )
+        player.sendPluginMessage(
+            this.plugin, outgoingMessage
+        )
+        plugin.logger.info("Wrote outgoing message: $outgoingMessage")
     }
 }

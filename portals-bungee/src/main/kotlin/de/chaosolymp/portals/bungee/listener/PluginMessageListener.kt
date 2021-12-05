@@ -7,6 +7,7 @@ import de.chaosolymp.portals.bungee.extension.sendData
 import de.chaosolymp.portals.core.*
 import de.chaosolymp.portals.core.messages.proxy_to_server.*
 import de.chaosolymp.portals.core.messages.server_to_proxy.*
+import net.md_5.bungee.api.connection.Connection
 import net.md_5.bungee.api.connection.ProxiedPlayer
 import net.md_5.bungee.api.event.PluginMessageEvent
 import net.md_5.bungee.api.plugin.Listener
@@ -20,6 +21,75 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
     internal var serverInformationResponse: CompletableFuture<ServerInformationResponsePluginMessage>? = null
 
     private val blockChangeMap = mutableMapOf<UUID, CompletableFuture<Void>>()
+
+    private fun handleLocationResponsePluginMessage(deserialized: LocationResponsePluginMessage, connection: Connection) {
+        if (map.containsKey(deserialized.uuid)) {
+            map[deserialized.uuid]?.complete(LocationResponse(deserialized.canCreatePortal, deserialized.world, deserialized.x, deserialized.y, deserialized.z))
+            map.remove(deserialized.uuid)
+        } else {
+            this.plugin.proxy.logger.warning("${connection.socketAddress} sent location request for non-requested uuid ${deserialized.uuid}.")
+        }
+    }
+
+    private fun handleAuthorizeTeleportRequestPluginMessage(deserialized: AuthorizeTeleportRequestPluginMessage) {
+        val player = plugin.proxy.getPlayer(deserialized.uuid)
+        val server = player.server.info.name
+
+        val id = this.plugin.portalManager.getPortalIdAt(server, deserialized.world, deserialized.x, deserialized.y, deserialized.z)
+        if (id == null) {
+            plugin.logger.warning("Caught invalid teleportation - World: ${deserialized.world} X: ${deserialized.x} Y: ${deserialized.y} Z: ${deserialized.z}")
+            return
+        }
+
+        val link = this.plugin.portalManager.getPortalLink(id)
+        if(link == null) {
+            plugin.logger.warning("Cannot perform teleportation because portal #${id} is not linked")
+            return
+        }
+
+        val portal = this.plugin.portalManager.getPortal(link)
+        if(portal == null) {
+            plugin.logger.warning("Not expected behavior: Portal #${id} is linked to #${link} but #${link} is not present in database")
+            return
+        }
+
+        val serverInfo = this.plugin.proxy.getServerInfo(portal.server)
+        if (portal.server != server) {
+            player.connect(serverInfo)
+            plugin.logger.info("Sent player ${player.name} (${player.uniqueId}) to ${serverInfo.name}")
+        } else {
+            plugin.logger.info("Cannot connect, the player is on the same server")
+        }
+
+        serverInfo.sendData(AuthorizeTeleportResponsePluginMessage(deserialized.uuid, portal.world, portal.x, portal.y, portal.z))
+    }
+
+    private fun handleBlockChangeAcceptancePluginMessage(deserialized: BlockChangeAcceptancePluginMessage, connection: Connection) {
+        if (blockChangeMap.containsKey(deserialized.uuid)) {
+            blockChangeMap[deserialized.uuid]?.complete(null)
+            blockChangeMap.remove(deserialized.uuid)
+        } else {
+            plugin.proxy.logger.warning("${connection.socketAddress} sent block change response for non-requested uuid ${deserialized.uuid}.")
+        }
+    }
+
+    private fun handleValidationPluginMessage(deserialized: ValidationPluginMessage) {
+        val serverInfo = plugin.proxy.getPlayer(deserialized.uuid).server.info
+
+        val valid = plugin.portalManager.getPortalIdAt(serverInfo.name, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z) != null
+        serverInfo.sendData(ValidationResponsePluginMessage(deserialized.uuid, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z, valid))
+    }
+
+    private fun handleServerInformationResponsePluginMessage(deserialized: ServerInformationResponsePluginMessage) {
+        if(serverInformationResponse == null) {
+            plugin.proxy.logger.warning("Future for ServerInformationResponsePluginMessage is not present")
+        } else {
+            serverInformationResponse!!.complete(deserialized)
+
+            // Reset future
+            serverInformationResponse = null
+        }
+    }
 
     @EventHandler
     @Suppress("UnstableApiUsage")
@@ -37,63 +107,11 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
         }
 
         when (deserialized) {
-            is LocationResponsePluginMessage -> {
-                if (map.containsKey(deserialized.uuid)) {
-                    map[deserialized.uuid]?.complete(LocationResponse(deserialized.canCreatePortal, deserialized.world, deserialized.x, deserialized.y, deserialized.z))
-                    map.remove(deserialized.uuid)
-                } else {
-                    this.plugin.proxy.logger.warning("${event.sender.socketAddress} sent location request for non-requested uuid ${deserialized.uuid}.")
-                }
-            }
-            is AuthorizeTeleportRequestPluginMessage -> {
-                val server = this.plugin.proxy.getPlayer(deserialized.uuid).server.info.name
-
-                val id = this.plugin.portalManager.getPortalIdAt(server, deserialized.world, deserialized.x, deserialized.y, deserialized.z)
-                if (id != null) {
-                    val link = this.plugin.portalManager.getPortalLink(id)
-                    plugin.logger.info("link = $link")
-                    val portal = this.plugin.portalManager.getPortal(link!!)
-                    plugin.logger.info("portal = $portal")
-
-                    val serverInfo = this.plugin.proxy.getServerInfo(portal?.server)
-                    plugin.logger.info("serverInfo = $serverInfo")
-                    if (portal?.server != server) {
-                        plugin.logger.info("connecting")
-                        plugin.proxy.getPlayer(deserialized.uuid).connect(serverInfo)
-                    } else {
-                        plugin.logger.info("Cannot connect, the player is on the same server")
-                    }
-
-                    serverInfo.sendData(AuthorizeTeleportResponsePluginMessage(deserialized.uuid, portal!!.world, portal.x, portal.y, portal.z))
-                    plugin.logger.info("Sent plugin message")
-                    if (portal.server != server) {
-                        plugin.proxy.getPlayer(deserialized.uuid).connect(serverInfo)
-                    }
-                } else {
-                    plugin.logger.warning("Caught invalid teleportation - World: ${deserialized.world} X: ${deserialized.x} Y: ${deserialized.y} Z: ${deserialized.z}")
-                }
-            }
-            is BlockChangeAcceptancePluginMessage -> {
-                if (blockChangeMap.containsKey(deserialized.uuid)) {
-                    blockChangeMap[deserialized.uuid]?.complete(null)
-                    blockChangeMap.remove(deserialized.uuid)
-                } else {
-                    plugin.proxy.logger.warning("${event.sender.socketAddress} sent block change response for non-requested uuid ${deserialized.uuid}.")
-                }
-            }
-            is ValidationPluginMessage -> {
-                val serverInfo = plugin.proxy.getPlayer(deserialized.uuid).server.info
-
-                val valid = plugin.portalManager.getPortalIdAt(serverInfo.name, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z) != null
-                serverInfo.sendData(ValidationResponsePluginMessage(deserialized.uuid, deserialized.worldName, deserialized.x, deserialized.y, deserialized.z, valid))
-            }
-            is ServerInformationResponsePluginMessage -> {
-                if(serverInformationResponse == null) {
-                    plugin.proxy.logger.warning("Future for ServerInformationResponsePluginMessage is not present")
-                } else {
-                    serverInformationResponse!!.complete(deserialized)
-                }
-            }
+            is LocationResponsePluginMessage -> handleLocationResponsePluginMessage(deserialized, event.sender)
+            is AuthorizeTeleportRequestPluginMessage -> handleAuthorizeTeleportRequestPluginMessage(deserialized)
+            is BlockChangeAcceptancePluginMessage -> handleBlockChangeAcceptancePluginMessage(deserialized, event.sender)
+            is ValidationPluginMessage -> handleValidationPluginMessage(deserialized)
+            is ServerInformationResponsePluginMessage -> handleServerInformationResponsePluginMessage(deserialized)
             else -> plugin.logger.warning("Unknown incoming plugin message")
         }
     }

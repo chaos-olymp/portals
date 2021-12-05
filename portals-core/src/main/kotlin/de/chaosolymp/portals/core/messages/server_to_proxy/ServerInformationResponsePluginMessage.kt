@@ -4,4 +4,4 @@ import de.chaosolymp.portals.annotations.messages.PluginMessage
 import de.chaosolymp.portals.core.messages.AbstractPluginMessage
 
 @PluginMessage("portals:s2p_server_information")
-data class ServerInformationResponsePluginMessage(val pluginVersion: String, val timestamp: Long, val exceptionCount: Int): AbstractPluginMessage()
+data class ServerInformationResponsePluginMessage(val pluginVersion: String, val timestamp: Long): AbstractPluginMessage()

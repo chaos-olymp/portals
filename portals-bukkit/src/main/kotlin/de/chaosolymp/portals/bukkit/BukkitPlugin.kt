@@ -30,7 +30,6 @@ class BukkitPlugin: JavaPlugin {
     private lateinit var config: YamlConfiguration
     private lateinit var pluginCommunicationListener: PluginCommunicationListener
 
-    internal lateinit var exceptionHandler: ExceptionHandler
     internal val portalRequestMap = mutableMapOf<Pair<String, Triple<Int, Int, Int>>, CompletableFuture<Boolean>>()
     internal val pendingTeleports = mutableListOf<Pair<UUID, Location>>()
 
@@ -54,8 +53,6 @@ class BukkitPlugin: JavaPlugin {
         initConfig()
         server.pluginManager.registerEvents(PortalListener(this),this)
 
-        exceptionHandler = ExceptionHandler(this)
-        //Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
         logger.info("Initialized global exception handler")
 
         if (RuntimeStatics.TEST_ENVIRONMENT) {
@@ -105,9 +102,10 @@ class BukkitPlugin: JavaPlugin {
     }
 
     internal fun canCreatePortal(player: Player): Boolean {
-        val blockLocation = player.location // no -1 because END_PORTAL_FRAME is 0.8 blocks height
+        val blockLocation = player.location
         val material = player.location.world!!.getBlockAt(Location(blockLocation.world,
             blockLocation.blockX.toDouble(),
+            // no -1 because END_PORTAL_FRAME is 0.8 blocks height
             blockLocation.blockY.toDouble(),
             blockLocation.blockZ.toDouble()
         )).type
@@ -120,28 +118,23 @@ class BukkitPlugin: JavaPlugin {
             return false
         }
         val location = player.location
-        val spawnLocation = location.world?.spawnLocation
+        val world = location.world!!
+        val spawnLocation = world.spawnLocation
 
-        return spawnLocation?.distance(location)!! < this.server.spawnRadius // player is in spawn radius
+        return spawnLocation.distance(location) < this.server.spawnRadius // player is in spawn radius
     }
 
     private fun hasRegionPermissions(player: Player): Boolean {
-        var res = true
-        this.worldGuard?.let { worldGuard ->
-            {
-                val location = player.location
-                worldGuard.platform.regionContainer?.let { regionContainer ->
-                    regionContainer.get(BukkitAdapter.adapt(location.world))?.let {
-                        res = it.getApplicableRegions(BlockVector3.at(location.blockX, location.blockY, location.blockZ))
-                            ?.isOwnerOfAll(WorldGuardPlugin.inst().wrapPlayer(player))!! // owner is required to create portals
-                    }
+        if(worldGuard == null) return true
+        val location = player.location
 
+        val regionContainer = worldGuard!!.platform.regionContainer
+        val worldGuardWorld = BukkitAdapter.adapt(location.world)
+        val regionManager = regionContainer[worldGuardWorld]!!
 
-                }
-            }
-        }
-
-        return res
+        return regionManager.getApplicableRegions(BlockVector3.at(location.blockX, location.blockY, location.blockZ))
+                // Region owner is required to create portal
+            ?.isOwnerOfAll(WorldGuardPlugin.inst().wrapPlayer(player))!!
     }
 
     fun isValidPortal(player: Player, location: Location): Boolean {

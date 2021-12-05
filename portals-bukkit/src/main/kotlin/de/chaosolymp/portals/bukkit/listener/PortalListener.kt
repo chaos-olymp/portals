@@ -72,22 +72,4 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
         }
     }
 
-    /*@EventHandler
-    fun handleSneakToggle(event: PlayerToggleSneakEvent) {
-        val joinTime = joinTimeMap[event.player.uniqueId]?.plus(coolDown)
-        if(joinTime != null && joinTime > System.currentTimeMillis()) {
-            event.player.sendTitle("", "Cooldown ...", 500, 500, 500)
-            return
-        }
-        if(event.isSneaking) {
-            val location = event.player.location
-            val block = location.world!!.getBlockAt(location)
-            if(block.type == PORTAL_MATERIAL) {
-                plugin.teleport(event.player, block)
-            }
-        } else {
-            joinTimeMap.remove(event.player.uniqueId)
-        }
-    }*/
-
 }
