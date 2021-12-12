@@ -3,8 +3,10 @@ package de.chaosolymp.portals.bungee.command
 import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.bungee.config.Replacement
 import de.chaosolymp.portals.bungee.extension.sendMessage
-import de.chaosolymp.portals.core.NumberUtils
+import de.chaosolymp.portals.core.LocationResponse
 import net.md_5.bungee.api.CommandSender
+import net.md_5.bungee.api.connection.ProxiedPlayer
+import java.util.concurrent.CompletableFuture
 
 class RemoveCommand(private val plugin: BungeePlugin) : SubCommand {
 
@@ -15,36 +17,44 @@ class RemoveCommand(private val plugin: BungeePlugin) : SubCommand {
             return
         }
 
-        // Validate argument count
-        if (args == null || args.size != 1) return
+        // Send error message if `sender` is not an instance of `ProxiedPlayer`
+        // We need this, because we require a Location of the player
+        // The console is not able to provide a Location
+        if (sender !is ProxiedPlayer) {
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.not-a-player"))
+            return
+        }
 
-        val portal = args[0]
+        // Create CompletableFeature and register a callback function using thenAccept
+        val locationFuture = CompletableFuture<LocationResponse>()
+        locationFuture.thenAccept {
+            val portalId = plugin.portalManager.getPortalIdAt(sender.server.info.name, it.world, it.x, it.y, it.z)
+            processRemove(portalId, sender)
+        }
+
+        // Send request plugin message to the server
+        plugin.pluginMessageListener.requestLocation(sender, locationFuture)
+    }
+
+    private fun processRemove(portalId: Int?, sender: ProxiedPlayer) {
 
         // Send message if the portal does not exist
-        if (!plugin.portalManager.doesNameOrIdExist(portal)) {
+        if (portalId == null) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.not-exists"))
             return
         }
 
-        // Use user-provided id if user entered a valid numeric value > 0
-        // Otherwise find id in database by its name
-        val id = if (NumberUtils.isUnsignedNumber(portal)) {
-            Integer.parseUnsignedInt(portal)
-        } else {
-            plugin.portalManager.getIdOfName(portal)
-        }
-
         // Send message if the player has no access to the portal
-        if (!plugin.portalManager.doesPlayerOwnPortalOrHasOtherAccess(sender, id)) {
+        if (!plugin.portalManager.doesPlayerOwnPortalOrHasOtherAccess(sender, portalId)) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-access-to-portal"))
             return
         }
 
-        val cachedName = plugin.portalManager.getNameOfId(id)
-        val portalObj = plugin.portalManager.getPortal(id)!!
+        val cachedName = plugin.portalManager.getNameOfId(portalId)
+        val portalObj = plugin.portalManager.getPortal(portalId)!!
 
         // Remove portal from database
-        plugin.portalManager.remove(id)
+        plugin.portalManager.remove(portalId)
 
         // Send destroy request for the portal block (END_PORTAL_FRAME)
         plugin.pluginMessageListener.sendBlockDestroy(
@@ -59,12 +69,11 @@ class RemoveCommand(private val plugin: BungeePlugin) : SubCommand {
         sender.sendMessage(
             plugin.messageConfiguration.getMessage(
                 "command.remove",
-                Replacement("id", id),
+                Replacement("id", portalId),
                 Replacement(
                     "name", cachedName
                 )
             )
         )
-
     }
 }
