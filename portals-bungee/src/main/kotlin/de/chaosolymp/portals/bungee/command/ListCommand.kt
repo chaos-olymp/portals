@@ -58,16 +58,15 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
         }
 
         val count = plugin.portalManager.countPortals()
-        val maxCount = page * itemsPerPage
+        val maxPages: Int = count / itemsPerPage // we don't want a Double -> Int
 
         // Send message if page is out of range
-        if (maxCount > count) {
+        if (maxPages < page) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.pagination.not-exists"))
             return
         }
 
-        val skip = maxCount - itemsPerPage
-        val maxPages: Int = count / itemsPerPage // we don't want a Double -> Int
+        val skip = (page - 1) * itemsPerPage
         val result = plugin.portalManager.getPortals(sender, mode, skip, itemsPerPage)
 
         // Send header component

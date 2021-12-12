@@ -36,6 +36,9 @@ class InfoCommand(private val plugin: BungeePlugin) : SubCommand {
             return
         }
 
+        // If player name cannot be retrieved it prints the uuid
+        val ownerDisplay = plugin.proxy.getPlayer(portal.owner) ?: portal.owner.toString()
+
         // Send information message
         sender.sendMessage(
             plugin.messageConfiguration.getMessage(
@@ -43,10 +46,7 @@ class InfoCommand(private val plugin: BungeePlugin) : SubCommand {
                 Replacement("name", portal.name),
                 Replacement("display-name", portal.displayName ?: portal.name),
                 Replacement("id", portal.id),
-                Replacement(
-                    "owner",
-                    (plugin.proxy.getPlayer(portal.owner) ?: portal.owner.toString())
-                ), // If player name cannot be retrieved it prints the uuid
+                Replacement("owner", ownerDisplay),
                 Replacement("public", if (portal.public) "✓" else "×"),
                 Replacement("created", portal.created.toString()),
                 Replacement("updated", portal.updated.toString())

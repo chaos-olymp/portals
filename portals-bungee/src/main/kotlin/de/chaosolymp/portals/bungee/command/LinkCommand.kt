@@ -11,7 +11,7 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
     override fun execute(sender: CommandSender, args: Array<out String>?) {
         // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.link")) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.no-permission"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
             return
         }
 
@@ -19,7 +19,7 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
         // We need this, because we require a Location of the player
         // The console is not able to provide a Location
         if (sender !is ProxiedPlayer) {
-            sender.sendMessage(this.plugin.messageConfiguration.getMessage("error.not-a-player"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.not-a-player"))
             return
         }
 
@@ -63,7 +63,7 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
         // Send error message if `originId` does not exist
         if (originId == null || !this.plugin.portalManager.doesIdExists(originId)) {
             sender.sendMessage(
-                this.plugin.messageConfiguration.getMessage(
+                plugin.messageConfiguration.getMessage(
                     "error.origin-not-exists"
                 )
             )
@@ -73,7 +73,7 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
         // Send error message if `targetId` does not exist
         if (targetId == null || !this.plugin.portalManager.doesIdExists(targetId)) {
             sender.sendMessage(
-                this.plugin.messageConfiguration.getMessage(
+                plugin.messageConfiguration.getMessage(
                     "error.link-not-exists"
                 )
             )
@@ -84,7 +84,7 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
         // nor the player has admin permission
         if (!plugin.portalManager.doesPlayerOwnPortal(sender.uniqueId, originId)) {
             sender.sendMessage(
-                this.plugin.messageConfiguration.getMessage(
+                plugin.messageConfiguration.getMessage(
                     "error.no-access-to-portal"
                 )
             )
@@ -98,7 +98,7 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
             ))
         ) {
             sender.sendMessage(
-                this.plugin.messageConfiguration.getMessage(
+                plugin.messageConfiguration.getMessage(
                     "error.no-access-to-linked-portal"
                 )
             )
@@ -110,7 +110,7 @@ class LinkCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Send result message
         sender.sendMessage(
-            this.plugin.messageConfiguration.getMessage(
+            plugin.messageConfiguration.getMessage(
                 "command.link",
                 Replacement("origin-name", plugin.portalManager.getNameOfId(originId)),
                 Replacement("origin-id", originId),

@@ -97,7 +97,7 @@ class BukkitPlugin: JavaPlugin {
         val y = block.location.blockY
         val z = block.location.blockZ
 
-        val outgoingMessage = AuthorizeTeleportRequestPluginMessage(player.uniqueId, world, x + 1, y - 1, z)
+        val outgoingMessage = AuthorizeTeleportRequestPluginMessage(player.uniqueId, world, x, y, z)
         player.sendPluginMessage(this, outgoingMessage)
         logger.info("Wrote outgoing message: $outgoingMessage")
     }

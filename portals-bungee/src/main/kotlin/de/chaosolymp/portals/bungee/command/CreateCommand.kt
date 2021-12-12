@@ -66,7 +66,7 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
                 false,
                 it.world,
                 it.x,
-                it.y - 1,
+                it.y,
                 it.z
             )
 

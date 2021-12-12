@@ -131,7 +131,7 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
             chunk.load(true)
         }
 
-        val block = world.getBlockAt(deserialized.x, deserialized.y, deserialized.z)
+        val block = world.getBlockAt(deserialized.x, deserialized.y + 1, deserialized.z)
         val stack = ItemStack(PORTAL_BASE_MATERIAL, 1)
         block.type = Material.AIR
 
@@ -140,7 +140,7 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
             Location(
                 world,
                 deserialized.x.toDouble(),
-                deserialized.y.toDouble(),
+                deserialized.y.toDouble() + 1,
                 deserialized.z.toDouble()
             ), stack
         )
