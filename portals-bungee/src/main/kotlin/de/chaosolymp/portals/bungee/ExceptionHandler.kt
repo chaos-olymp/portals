@@ -22,7 +22,7 @@ class ExceptionHandler(val plugin: BungeePlugin) : Thread.UncaughtExceptionHandl
             .append("SEVERE")
             .color(ChatColor.DARK_RED)
             .append("/portals ")
-            .color(ChatColor.BLUE)
+            .color(ChatColor.DARK_RED)
             .append("An exception occurred (Thread ${t.id}/${t.name} - ${e.javaClass.name}) - ${e.message ?: e.localizedMessage } - See console for stack trace")
             .color(ChatColor.RED)
             .create())

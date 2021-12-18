@@ -65,9 +65,9 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
             deserialized.uuid,
             plugin.canCreatePortal(targetPlayer),
             worldName,
-            targetPlayer.location.x.toInt(),
-            targetPlayer.location.y.toInt(),
-            targetPlayer.location.z.toInt()
+            targetPlayer.location.blockX,
+            targetPlayer.location.blockY,
+            targetPlayer.location.blockZ
         )
 
         player.sendPluginMessage(
@@ -131,7 +131,7 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
             chunk.load(true)
         }
 
-        val block = world.getBlockAt(deserialized.x, deserialized.y + 1, deserialized.z)
+        val block = world.getBlockAt(deserialized.x, deserialized.y, deserialized.z)
         val stack = ItemStack(PORTAL_BASE_MATERIAL, 1)
         block.type = Material.AIR
 
@@ -140,7 +140,7 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
             Location(
                 world,
                 deserialized.x.toDouble(),
-                deserialized.y.toDouble() + 1,
+                deserialized.y.toDouble(),
                 deserialized.z.toDouble()
             ), stack
         )

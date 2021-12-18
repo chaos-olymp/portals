@@ -89,8 +89,7 @@ class BukkitPlugin: JavaPlugin {
         val builder = ComponentBuilder(config.getString("messages.sneak-to-tp"))
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, *builder.create())
     }
-
-    @Suppress("UnstableApiUsage")
+    
     internal fun teleport(player: Player, block: Block) {
         val world = block.location.world!!.name
         val x = block.location.blockX

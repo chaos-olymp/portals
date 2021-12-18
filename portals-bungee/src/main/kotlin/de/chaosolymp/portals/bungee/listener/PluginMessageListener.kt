@@ -3,6 +3,7 @@ package de.chaosolymp.portals.bungee.listener
 import com.google.common.io.ByteStreams
 import de.chaosolymp.portals.core.message.generated.deserialize
 import de.chaosolymp.portals.bungee.BungeePlugin
+import de.chaosolymp.portals.bungee.DebugMessenger
 import de.chaosolymp.portals.bungee.extension.sendData
 import de.chaosolymp.portals.core.*
 import de.chaosolymp.portals.core.message.proxy_to_server.*
@@ -139,6 +140,12 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
     }
 
     fun sendBlockDestroy(server: String, world: String, x: Int, y: Int, z: Int) {
-        plugin.proxy.servers[server]!!.sendData(BlockDestroyRequestPluginMessage(world, x, y, z))
+        val serverInfo = plugin.proxy.servers[server]
+        if(serverInfo == null) {
+            plugin.logger.warning("Server $server does not exist")
+            DebugMessenger.warning("Messaging", "Cannot send block destroy to server $server (Server not available)")
+            return
+        }
+        serverInfo.sendData(BlockDestroyRequestPluginMessage(world, x, y, z))
     }
 }
