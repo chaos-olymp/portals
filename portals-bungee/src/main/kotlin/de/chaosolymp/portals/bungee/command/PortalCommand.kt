@@ -20,6 +20,7 @@ class PortalCommand(private val plugin: BungeePlugin) : Command("portal") {
         commandRegistry["remove"] = RemoveCommand(plugin)
         commandRegistry["check"] = CheckCommand(plugin)
         commandRegistry["cleanup"] = CleanupCommand(plugin)
+        commandRegistry["tp"] = TeleportCommand(plugin)
         commandRegistry["help"] = HelpCommand(plugin, this)
     }
 
