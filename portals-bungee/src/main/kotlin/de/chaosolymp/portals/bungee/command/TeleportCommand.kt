@@ -17,7 +17,10 @@ class TeleportCommand(private val plugin: BungeePlugin) : SubCommand {
             return
         }
 
-        if(sender !is ProxiedPlayer) {
+        // Send error message if `sender` is not an instance of `ProxiedPlayer`
+        // We need this, to teleport the player
+        if (sender !is ProxiedPlayer) {
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.not-a-player"))
             return
         }
 
@@ -53,5 +56,9 @@ class TeleportCommand(private val plugin: BungeePlugin) : SubCommand {
         if(sender.server.info != serverInfo) {
             sender.connect(serverInfo)
         }
+
+        sender.sendMessage(
+            plugin.messageConfiguration.getMessage("messages.command.teleport.success", Replacement("display-name", portal.displayName ?: portal.name))
+        )
     }
 }

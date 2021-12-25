@@ -3,6 +3,7 @@ package de.chaosolymp.portals.bungee
 import de.chaosolymp.portals.bungee.event.PortalCreateEvent
 import de.chaosolymp.portals.bungee.event.PortalRemoveEvent
 import de.chaosolymp.portals.core.DatabaseService
+import de.chaosolymp.portals.core.NumberUtils
 import de.chaosolymp.portals.core.Portal
 import de.chaosolymp.portals.core.PortalListType
 import net.md_5.bungee.api.CommandSender
@@ -12,11 +13,11 @@ import java.util.*
 
 class PortalManager(private val plugin: BungeePlugin, private val databaseService: DatabaseService) {
 
-    private val regex = Regex("^[a-z_]+")
+    private val regex = Regex("^[a-zA-Z0-9_-]+")
 
     fun createTable() = databaseService.createTable()
 
-    fun isNameValid(name: String) = name.isNotEmpty() && name.length < 33 && name.matches(regex)
+    fun isNameValid(name: String) = name.isNotEmpty() && name.length < 33 && !NumberUtils.isNumber(name) && regex.matches(name)
 
     fun doesNameExist(name: String): Boolean = databaseService.doesNameExist(name)
     

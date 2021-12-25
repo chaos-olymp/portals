@@ -18,7 +18,11 @@ class InfoCommand(private val plugin: BungeePlugin) : SubCommand {
             return
         }
 
-        if(sender !is ProxiedPlayer) {
+        // Send error message if `sender` is not an instance of `ProxiedPlayer`
+        // We need this, because we require a Location of the player
+        // The console is not able to provide a Location
+        if (sender !is ProxiedPlayer) {
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.not-a-player"))
             return
         }
 

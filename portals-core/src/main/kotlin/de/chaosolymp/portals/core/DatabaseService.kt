@@ -2,6 +2,7 @@ package de.chaosolymp.portals.core
 
 import de.chaosolymp.portals.core.extension.getUUID
 import de.chaosolymp.portals.core.extension.prepareAndLogStatement
+import java.sql.ResultSet
 import java.sql.Statement
 import java.sql.Timestamp
 import java.time.Instant
@@ -11,9 +12,6 @@ class DatabaseService(
     private val databaseProvider: DatabaseProvider,
     private val callback: PrepareStatementCallback? = null
 ) {
-
-    private val regex = Regex("^[a-z_]+")
-
     fun createTable() {
         databaseProvider.useConnection {
             val stmt =
@@ -41,8 +39,6 @@ class DatabaseService(
             stmt.execute()
         }
     }
-
-    fun isNameValid(name: String) = name.isNotEmpty() && name.length < 33 && name.matches(regex)
 
     fun doesNameExist(name: String): Boolean {
         databaseProvider.useConnection {
@@ -588,13 +584,15 @@ class DatabaseService(
         skip: Int,
         count: Int
     ): Iterable<Portal> {
-        val stmt =
+        val list = mutableListOf<Portal>()
+        databaseProvider.useConnection {
+            val rs: ResultSet
             if (sender != null && listType == PortalListType.OWN) {
-                databaseProvider.useConnection {
-                    val stmt =
-                        it.prepareAndLogStatement(
-                            callback,
-                            """
+
+                val stmt =
+                    it.prepareAndLogStatement(
+                        callback,
+                        """
                     SELECT 
                         id, 
                         name, 
@@ -613,18 +611,18 @@ class DatabaseService(
                     WHERE owner = ?
                     LIMIT ?, ? 
                 """.trimIndent()
-                        )
-                    stmt.setInt(1, skip)
-                    stmt.setInt(2, skip + count)
-                    stmt.setBytes(3, UUIDUtils.getBytesFromUUID(sender))
-                    return@useConnection stmt
-                }
+                    )
+                stmt.setBytes(1, UUIDUtils.getBytesFromUUID(sender))
+                stmt.setInt(2, skip)
+                stmt.setInt(3, count)
+                rs = stmt.executeQuery()
+
             } else if (listType == PortalListType.PUBLIC) {
-                databaseProvider.useConnection {
-                    val stmt =
-                        it.prepareAndLogStatement(
-                            callback,
-                            """
+
+                val stmt =
+                    it.prepareAndLogStatement(
+                        callback,
+                        """
                     SELECT 
                         id, 
                         name, 
@@ -643,17 +641,17 @@ class DatabaseService(
                     WHERE public = TRUE
                     LIMIT ?, ? 
                 """.trimIndent()
-                        )
-                    stmt.setInt(1, skip)
-                    stmt.setInt(2, skip + count)
-                    return@useConnection stmt
-                }
+                    )
+                stmt.setInt(1, skip)
+                stmt.setInt(2, count)
+                rs = stmt.executeQuery()
+
             } else {
-                databaseProvider.useConnection {
-                    val stmt =
-                        it.prepareAndLogStatement(
-                            callback,
-                            """
+
+                val stmt =
+                    it.prepareAndLogStatement(
+                        callback,
+                        """
                     SELECT 
                         id, 
                         name, 
@@ -671,49 +669,48 @@ class DatabaseService(
                     FROM `portals` 
                     LIMIT ?, ?
                 """.trimIndent()
-                        )
-                    stmt.setInt(1, skip)
-                    stmt.setInt(2, skip + count)
-                    return@useConnection stmt
-                }
-            }
-        val list = mutableListOf<Portal>()
-        val rs = stmt.executeQuery()
-        while (rs.next()) {
-            val id = rs.getInt("id")
-            val name = rs.getString("name")
-            val uuid = rs.getUUID("owner")
-            val displayName = rs.getString("display_name")
-            val public = rs.getBoolean("public")
-            val created = rs.getTimestamp("created")
-            val updated = rs.getTimestamp("updated")
-            val server = rs.getString("server")
-            val world = rs.getString("world")
-            val x = rs.getInt("x")
-            val y = rs.getInt("y")
-            val z = rs.getInt("z")
-            var link: Int? = rs.getInt("link")
-            if (rs.wasNull()) {
-                link = null
-            }
+                    )
+                stmt.setInt(1, skip)
+                stmt.setInt(2, count)
+                rs = stmt.executeQuery()
 
-            list.add(
-                Portal(
-                    id,
-                    uuid,
-                    name,
-                    displayName,
-                    public,
-                    created,
-                    updated,
-                    server,
-                    world,
-                    x,
-                    y,
-                    z,
-                    link
+            }
+            while (rs.next()) {
+                val id = rs.getInt("id")
+                val name = rs.getString("name")
+                val uuid = rs.getUUID("owner")
+                val displayName = rs.getString("display_name")
+                val public = rs.getBoolean("public")
+                val created = rs.getTimestamp("created")
+                val updated = rs.getTimestamp("updated")
+                val server = rs.getString("server")
+                val world = rs.getString("world")
+                val x = rs.getInt("x")
+                val y = rs.getInt("y")
+                val z = rs.getInt("z")
+                var link: Int? = rs.getInt("link")
+                if (rs.wasNull()) {
+                    link = null
+                }
+
+                list.add(
+                    Portal(
+                        id,
+                        uuid,
+                        name,
+                        displayName,
+                        public,
+                        created,
+                        updated,
+                        server,
+                        world,
+                        x,
+                        y,
+                        z,
+                        link
+                    )
                 )
-            )
+            }
         }
 
         return list

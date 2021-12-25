@@ -4,7 +4,9 @@ import com.google.common.io.ByteStreams
 import de.chaosolymp.portals.core.message.generated.deserialize
 import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.bungee.DebugMessenger
+import de.chaosolymp.portals.bungee.config.Replacement
 import de.chaosolymp.portals.bungee.extension.sendData
+import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.*
 import de.chaosolymp.portals.core.message.proxy_to_server.*
 import de.chaosolymp.portals.core.message.server_to_proxy.*
@@ -64,6 +66,10 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
         }
 
         serverInfo.sendData(AuthorizeTeleportResponsePluginMessage(deserialized.uuid, portal.world, portal.x, portal.y, portal.z))
+
+        player.sendMessage(
+            plugin.messageConfiguration.getMessage("messages.command.teleport.success", Replacement("display-name", portal.displayName ?: portal.name))
+        )
     }
 
     private fun handleBlockChangeAcceptancePluginMessage(deserialized: BlockChangeAcceptancePluginMessage, connection: Connection) {

@@ -17,7 +17,7 @@ class MessageConfiguration(private val config: Configuration) {
             config.set("messages.error.database-error", "%prefix% &cDatenbankfehler - Bitte kontaktiere einen Administrator")
             config.set("messages.error.wrong-syntax", "%prefix% &cKorrekte Verwendung: {syntax}")
             config.set("messages.error.name-already-exists", "%prefix% &cDer Portalname existiert bereits. Bitte wähle einen anderen.")
-            config.set("messages.error.wrong-name", "%prefix% &cDer Portalname darf NUR Kleinbuchstaben & Unterstriche (_) enthalten.")
+            config.set("messages.error.wrong-name", "%prefix% &cDer Portalname entspricht nicht unserer Konvention dazu.")
             config.set("messages.error.no-access-to-linked-portal", "%prefix% &cDu hast keine Berechtigung auf das zu verlinkende Portal. Bitte stelle sicher, dass der Portalbesitzer dies nicht auf Privat gestellt hat um es zu verlinken.")
             config.set("messages.error.no-access-to-portal", "%prefix% &cDies ist nicht dein Portal.")
             config.set("messages.error.not-exists", "%prefix% &cDieses Portal existiert nicht.")
@@ -38,6 +38,7 @@ class MessageConfiguration(private val config: Configuration) {
             config.set("messages.command.modify.display-name", "%prefix% &9Du hast den Anzeigename des Portals &2{name}&6#{id} &9auf &2{display-name}&r &9gestellt.")
             config.set("messages.command.modify.name", "%prefix% &9Du hast das Portal &6#{id} &9von &2{origin-name}&r &9in &2{target-name} &9unbenannt.")
             config.set("messages.command.remove", "%prefix% &9Du hast das Portal &2{name}&6#{id} &9entfernt.")
+            config.set("messages.command.teleport.success", "%prefix% &9Du wurdest erfolgreich zu {display-name} &9teleportiert.")
             config.set("messages.command.cleanup.start", "%prefix% &9Der Portal Cleanup wurde gestartet (0/{portal-count})")
             config.set("messages.command.cleanup.progress", "%prefix% &9Der Portal Cleanup läuft ({processed-items}/{portal-count})")
             config.set("messages.command.cleanup.end", "%prefix% &9Der Portal Cleanup wurde beendet ({portal-count}/{portal-count})")
@@ -49,8 +50,8 @@ class MessageConfiguration(private val config: Configuration) {
             config.set("messages.command.list.badge.own.hover", "&9Klicke hier um deine Portale aufzulisten")
             config.set("messages.command.list.badge.public.text", "&6[Öffentliche Portale]")
             config.set("messages.command.list.badge.public.hover", "&9Klicke hier um alle öffentlichen Portale aufzulisten")
-            config.set("messages.command.list.component", "%prefix% &6Name: {name}#{id} (&6Anzeigename: {display-name})")
-            config.set("messages.command.list.hover", "%9Klicke hier für mehr Informationen über dieses Portal")
+            config.set("messages.command.list.component", "%prefix% &6Name: &e{name}#{id} &6(Anzeigename: &e{display-name}&6)")
+            config.set("messages.command.list.hover", "&9Klicke hier für mehr Informationen über dieses Portal")
             config.set("messages.command.list.footer", "") // nothing
             config.set("messages.command.info", "\n%prefix% &6Name: {name}\n%prefix% &6Anzeigename: {display-name}\n%prefix% &6Id: {id}\n%prefix% &6Besitzer: {owner}\n%prefix% &6Öffentlich: {public}\n%prefix% &6Erstellt: {created}\n%prefix% &6Letzte Änderung: {updated}\n")
 

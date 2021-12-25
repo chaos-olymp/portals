@@ -4,6 +4,7 @@ import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.core.PortalListType
 import de.chaosolymp.portals.bungee.config.Replacement
 import de.chaosolymp.portals.bungee.extension.sendMessage
+import de.chaosolymp.portals.core.Portal
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.chat.ClickEvent
@@ -70,6 +71,21 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
         val result = plugin.portalManager.getPortals(sender, mode, skip, itemsPerPage)
 
         // Send header component
+        sendHeader(sender, page, maxPages)
+
+        // Create click-event navigation
+        sendBadges(sender, mode, page)
+
+        result.forEach { portal -> sendComponent(portal, sender) }
+
+        // Provide navigation controls
+        sendNavigationBar(page, maxPages, sender)
+
+        // Send list footer
+        sendFooter(sender, page, maxPages)
+    }
+
+    private fun sendHeader(sender: CommandSender, page: Int, maxPages: Int) {
         sender.sendMessage(
             this.plugin.messageConfiguration.getMessage(
                 "command.list.header",
@@ -77,8 +93,46 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
                 Replacement("max-pages", maxPages)
             )
         )
+    }
 
-        // Create click-event navigation
+    private fun sendFooter(sender: CommandSender, page: Int, maxPages: Int) {
+        sender.sendMessage(
+            plugin.messageConfiguration.getMessage(
+                "command.list.footer",
+                Replacement("current-page", page),
+                Replacement("max-pages", maxPages)
+            )
+        )
+    }
+
+    private fun sendNavigationBar(page: Int, maxPages: Int, sender: CommandSender) {
+        val paginationBuilder = ComponentBuilder()
+        val hasPrevious = page > 1
+        val hasNext = page < maxPages
+
+        if (hasPrevious) {
+            paginationBuilder.append("< ").color(ChatColor.AQUA)
+            paginationBuilder.event(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portal list ${page - 1}"))
+        } else {
+            paginationBuilder.append(" ")
+        }
+
+        paginationBuilder.append("----------").color(ChatColor.DARK_AQUA)
+
+        if (hasNext) {
+            paginationBuilder.append(" >").color(ChatColor.AQUA)
+            paginationBuilder.event(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portal list ${page + 1}"))
+        }
+
+        // Send navigation controls
+        sender.sendMessage(paginationBuilder.create())
+    }
+
+    private fun sendBadges(
+        sender: CommandSender,
+        mode: PortalListType,
+        page: Int
+    ) {
         val badgeBuilder = ComponentBuilder()
         if (sender.hasPermission("portals.list.all") && mode != PortalListType.ALL) {
             val badge = plugin.messageConfiguration.getMessage("messages.command.list.badge.all.text")
@@ -114,64 +168,34 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
             badgeBuilder.append(badge)
             badgeBuilder.append(" ")
         }
+    }
 
-        result.forEach { portal ->
-            // Create list component
-            val component = plugin.messageConfiguration.getMessage(
-                "command.list.component",
-                Replacement("name", portal.name),
-                Replacement("display-name", portal.displayName ?: portal.name),
-                Replacement("id", portal.id),
-                Replacement(
-                    "owner",
-                    (plugin.proxy.getPlayer(portal.owner) ?: portal.owner.toString())
-                ), // If player name cannot be retrieved it prints the uuid
-                Replacement("public", if (portal.public) "✓" else "×"),
-                Replacement("created", portal.created.toString()),
-                Replacement("updated", portal.updated.toString())
-            )
-
-            // Set click and hover events for these components
-            component.forEach {
-                it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portals info ${portal.id}")
-                it.hoverEvent = HoverEvent(
-                    HoverEvent.Action.SHOW_TEXT,
-                    Text(plugin.messageConfiguration.getMessage("command.list.hover"))
-                )
-            }
-
-            // Send list component
-            sender.sendMessage(component)
-        }
-
-        // Provide navigation controls
-        val paginationBuilder = ComponentBuilder()
-        val hasPrevious = page > 1
-        val hasNext = page < maxPages
-
-        if (hasPrevious) {
-            paginationBuilder.append("< ").color(ChatColor.AQUA)
-            paginationBuilder.event(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portal list ${page - 1}"))
-        }
-
-        paginationBuilder.append("-----").color(ChatColor.DARK_AQUA)
-
-        if (hasNext) {
-            paginationBuilder.append(" >").color(ChatColor.AQUA)
-            paginationBuilder.event(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portal list ${page + 1}"))
-        }
-
-        // Send navigation controls
-        sender.sendMessage(paginationBuilder.create())
-
-        // Send list footer
-        sender.sendMessage(
-            plugin.messageConfiguration.getMessage(
-                "command.list.footer",
-                Replacement("current-page", page),
-                Replacement("max-pages", maxPages)
-            )
+    private fun sendComponent(portal: Portal, sender: CommandSender) {
+        // Create list component
+        val component = plugin.messageConfiguration.getMessage(
+            "command.list.component",
+            Replacement("name", portal.name),
+            Replacement("display-name", portal.displayName ?: portal.name),
+            Replacement("id", portal.id),
+            Replacement(
+                "owner",
+                (plugin.proxy.getPlayer(portal.owner) ?: portal.owner.toString())
+            ), // If player name cannot be retrieved it prints the uuid
+            Replacement("public", if (portal.public) "✓" else "×"),
+            Replacement("created", portal.created.toString()),
+            Replacement("updated", portal.updated.toString())
         )
 
+        // Set click and hover events for these components
+        component.forEach {
+            it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portals info ${portal.id}")
+            it.hoverEvent = HoverEvent(
+                HoverEvent.Action.SHOW_TEXT,
+                Text(plugin.messageConfiguration.getMessage("command.list.hover"))
+            )
+        }
+
+        // Send list component
+        sender.sendMessage(component)
     }
 }
