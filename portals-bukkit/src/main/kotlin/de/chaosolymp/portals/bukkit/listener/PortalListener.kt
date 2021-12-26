@@ -18,86 +18,86 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
 
     private val joinTimeMap = mutableMapOf<UUID, Long>()
 
-    private val coolDownTickMap = mutableMapOf<Player, Int>()
+    private val countDownTickMap = mutableMapOf<Player, Int>()
     private val taskMap = mutableMapOf<Player, Int>()
+    private val teleportTicks = 6
+
+    init { scheduleCountdownTask() }
+
+    private fun scheduleCountdownTask() {
+        plugin.server.scheduler.runTaskTimer(plugin, Runnable {
+            for(player in countDownTickMap.keys) {
+                val block = player.location.block
+                // Sneaking or quitting the game, cancels the task
+                if (!player.isSneaking || !player.isOnline || player.location.block.type != PORTAL_MATERIAL) {
+                    countDownTickMap.remove(player)
+                    return@Runnable
+                }
+
+                // Send action bar message to player
+                val greenBlocks = teleportTicks - countDownTickMap[player]!!
+                val whiteBlocks = teleportTicks - greenBlocks
+                val component = ComponentBuilder()
+                    .append("\u2588".repeat(greenBlocks))
+                    .color(ChatColor.GREEN)
+                    .append("\u2588".repeat(whiteBlocks))
+                    .color(ChatColor.WHITE)
+                    .create()
+
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, *component)
+
+                if (countDownTickMap[player]!! == teleportTicks) {
+                    val task = taskMap[player]!!
+                    taskMap.remove(player)
+                    countDownTickMap.remove(player)
+                    plugin.teleport(player, block)
+                    plugin.server.scheduler.cancelTask(task)
+                    return@Runnable
+                }
+                countDownTickMap[player] = countDownTickMap[player]!!.inc()
+            }
+
+        }, 0L, 7L)
+    }
 
     @EventHandler
     fun handleSneakInPortal(event: PlayerToggleSneakEvent) {
-        if(!event.isSneaking) return
+        if (!event.isSneaking) return
 
         // Get block at moving-to location
         val world = event.player.location.world ?: return
         val block = world.getBlockAt(event.player.location)
 
         // Only handle blocks with typeof PORTAL_MATERIAL
-        if(block.type != PORTAL_MATERIAL) return
+        if (block.type != PORTAL_MATERIAL) return
 
         val player = event.player
 
         // Show particles
         plugin.handlePortalAppearance(player)
 
-        val teleportTicks = 6
-        val tickRunnable = Runnable {
-            if(!coolDownTickMap.containsKey(player)) {
-                coolDownTickMap[player] = 0
-            }
-
-            val newBlockLocation = world.getBlockAt(player.location).location
-
-            // Sneaking or quitting the game, cancels the task
-            if(!player.isSneaking || !player.isOnline || !(newBlockLocation.x == block.location.x && newBlockLocation.y == block.location.y && newBlockLocation.z == block.location.z)) {
-                taskMap[player]?.let {
-                    plugin.server.scheduler.cancelTask(it)
-                }
-                taskMap.remove(player)
-                coolDownTickMap.remove(player)
-                return@Runnable
-            }
-
-            // Send action bar message to player
-            val greenBlocks = teleportTicks - coolDownTickMap[player]!!
-            val whiteBlocks = teleportTicks - greenBlocks
-            val component = ComponentBuilder()
-                .append("\u2588".repeat(greenBlocks))
-                .color(ChatColor.GREEN)
-                .append("\u2588".repeat(whiteBlocks))
-                .color(ChatColor.WHITE)
-                .create()
-
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, *component)
-
-            if(coolDownTickMap[player]!! == teleportTicks) {
-                val task = taskMap[player]!!
-                taskMap.remove(player)
-                coolDownTickMap.remove(player)
-                plugin.teleport(player, block)
-                plugin.server.scheduler.cancelTask(task)
-                return@Runnable
-            }
-            coolDownTickMap[player] = coolDownTickMap[player]!!.inc()
+        if (!countDownTickMap.containsKey(player)) {
+            countDownTickMap[player]
         }
-        val scheduledTask = plugin.server.scheduler.runTaskTimer(plugin, tickRunnable, 0L, 10L)
-        taskMap[player] = scheduledTask.taskId
-    }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    fun handleBreakPortal(event: BlockBreakEvent) {
-        // Disallow portal block breaking
-        if (event.block.type != PORTAL_MATERIAL) return
+        @EventHandler(priority = EventPriority.HIGHEST)
+        fun handleBreakPortal(event: BlockBreakEvent) {
+            // Disallow portal block breaking
+            if (event.block.type != PORTAL_MATERIAL) return
 
-        plugin.removePortal(event.player, event.block.location)
-    }
+            plugin.removePortal(event.player, event.block.location)
+        }
 
-    @EventHandler
-    fun handleJoin(event: PlayerJoinEvent) {
-        for(pendingTeleport in plugin.pendingTeleports) {
-            if (pendingTeleport.first != event.player.uniqueId) continue
+        @EventHandler
+        fun handleJoin(event: PlayerJoinEvent) {
+            for (pendingTeleport in plugin.pendingTeleports) {
+                if (pendingTeleport.first != event.player.uniqueId) continue
 
-            event.player.teleport(pendingTeleport.second)
-            plugin.pendingTeleports.remove(pendingTeleport)
-            joinTimeMap[pendingTeleport.first] = System.currentTimeMillis()
-            return
+                event.player.teleport(pendingTeleport.second)
+                plugin.pendingTeleports.remove(pendingTeleport)
+                joinTimeMap[pendingTeleport.first] = System.currentTimeMillis()
+                return
+            }
         }
     }
 }
