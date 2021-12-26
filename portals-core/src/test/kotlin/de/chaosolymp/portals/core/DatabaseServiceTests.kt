@@ -234,6 +234,27 @@ class DatabaseServiceTests {
         assertEquals(portalId, obtainedId)
     }
 
+    @Test
+    fun testGetOffsetLimit() {
+        for(i in 1 until 30) {
+            databaseService.createPortal(UUID.randomUUID(), "test_portal_$i", "test_server", false, "test_world", i, 20, 30)
+        }
+
+        val firstFive = databaseService.getPortals(0, 5)
+        assertEquals(5, firstFive.size)
+        assertNotNull(firstFive.firstOrNull { p -> p.name == "test_portal_1" })
+        assertNotNull(firstFive.firstOrNull { p -> p.name == "test_portal_2" })
+        assertNotNull(firstFive.firstOrNull { p -> p.name == "test_portal_3" })
+        assertNotNull(firstFive.firstOrNull { p -> p.name == "test_portal_4" })
+        assertNotNull(firstFive.firstOrNull { p -> p.name == "test_portal_5" })
+
+        val threeWithOffset = databaseService.getPortals(8, 3)
+        assertEquals(3, threeWithOffset.size)
+        assertNotNull(firstFive.firstOrNull { p -> p.name == "test_portal_8" })
+        assertNotNull(firstFive.firstOrNull { p -> p.name == "test_portal_9" })
+        assertNotNull(firstFive.firstOrNull { p -> p.name == "test_portal_10" })
+    }
+
 
     @AfterEach
     fun tearDown() {
