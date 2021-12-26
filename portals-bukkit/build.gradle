@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.0'
+    }
+}
+
 plugins {
     id 'org.jetbrains.kotlin.jvm'
     id 'com.github.johnrengelman.shadow'
@@ -46,6 +55,23 @@ downloadPaper {
 
 runSpigot {
     jvmArgs '-Xmx512M'
+}
+
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.databind.ObjectMapper
+
+task fixConfig {
+    shouldRunAfter configSpigot
+    doLast {
+        def file = new File(spigot.debug.serverDirectory, 'spigot.yml')
+        def mapper = new ObjectMapper(new YAMLFactory());
+        mapper.findAndRegisterModules()
+        Map<String, Object> map = mapper.readValue(file, Map<String, Object>.class)
+        Map<String, Object> subMap = map.get('settings') as Map<String, Object>
+        subMap.put('bungeecord', true)
+        map.put('settings', subMap)
+        mapper.writeValue(file, map)
+    }
 }
 
 processResources {

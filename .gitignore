@@ -97,7 +97,6 @@ cwallet.sso.lck
 /portals-bukkit/debug/spigot/**
 !/portals-bukkit/debug/spigot/server.properties
 !/portals-bukkit/debug/spigot/bukkit.yml
-!/portals-bukkit/debug/spigot/spigot.yml
 !/portals-bukkit/debug/spigot/paper.yml
 !/portals-bukkit/debug/spigot/permissions.yml
 !/portals-bukkit/debug/spigot/help.yml
