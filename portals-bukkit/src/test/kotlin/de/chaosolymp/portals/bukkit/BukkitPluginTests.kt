@@ -34,8 +34,6 @@ internal class BukkitPluginTests {
         Assertions.assertFalse(inSpawnRadius)
     }
 
-    // TODO: Uncomment if https://github.com/MockBukkit/MockBukkit/issues/255 was implemented
-    /*
     @Test
     fun testIsInSpawnRadiusNonOp() {
         val world = server.addSimpleWorld("TestWorld")
@@ -46,7 +44,7 @@ internal class BukkitPluginTests {
 
         val inSpawnRadius = plugin.isInSpawnRadius(player);
         Assertions.assertTrue(inSpawnRadius)
-    }*/
+    }
 
     @AfterAll
     fun tearDown() {
