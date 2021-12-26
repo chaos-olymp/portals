@@ -1,7 +1,4 @@
-# This workflow will build a Java project with Gradle
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
-
-name: "Gradle [Push]"
+name: "Portals CI"
 
 on:
   push:
@@ -11,9 +8,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 16
@@ -23,4 +18,41 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew build -x test
+    - name: Upload universal build artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: portals-universal.jar
+        path: ./build/libs/portals-all-*.jar
+        if-no-files-found: error
+    - name: Upload bukkit-only build artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: portals-bukkit.jar
+        path: ./portals-bukkit/build/libs/portals-bukkit-*-all.jar
+        if-no-files-found: error
+    - name: Upload bungeecord-only build artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: portals-bungeecord.jar
+        path: ./portals-bungee/build/libs/portals-bungee-*-all.jar
+        if-no-files-found: error
+    - name: Upload kapt-result (for debugging purposes)
+      uses: actions/upload-artifact@v2
+      with:
+        name: PluginMessageGenerated.kt
+        path: ./portals-core/build/generated/source/kaptKotlin/main/de/chaosolymp/portals/core/message/generated/PluginMessageGenerated.kt
+        if-no-files-found: warn
+    - name: Run tests
+      run: ./gradlew test
+    - name: Upload core test results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always()
+      with:
+        files: ./portals-core/build/test-results/**/*.xml
+    - name: Upload bukkit test results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always()
+      with:
+        files: ./portals-bukkit/build/test-results/**/*.xml
+      # Currently there are no bungeecord tests
