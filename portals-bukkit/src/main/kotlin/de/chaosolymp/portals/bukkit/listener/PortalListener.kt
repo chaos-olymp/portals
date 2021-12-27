@@ -80,24 +80,25 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
             countDownTickMap[player]
         }
 
-        @EventHandler(priority = EventPriority.HIGHEST)
-        fun handleBreakPortal(event: BlockBreakEvent) {
-            // Disallow portal block breaking
-            if (event.block.type != PORTAL_MATERIAL) return
+    }
 
-            plugin.removePortal(event.player, event.block.location)
-        }
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun handleBreakPortal(event: BlockBreakEvent) {
+        // Disallow portal block breaking
+        if (event.block.type != PORTAL_MATERIAL) return
 
-        @EventHandler
-        fun handleJoin(event: PlayerJoinEvent) {
-            for (pendingTeleport in plugin.pendingTeleports) {
-                if (pendingTeleport.first != event.player.uniqueId) continue
+        plugin.removePortal(event.player, event.block.location)
+    }
 
-                event.player.teleport(pendingTeleport.second)
-                plugin.pendingTeleports.remove(pendingTeleport)
-                joinTimeMap[pendingTeleport.first] = System.currentTimeMillis()
-                return
-            }
+    @EventHandler
+    fun handleJoin(event: PlayerJoinEvent) {
+        for (pendingTeleport in plugin.pendingTeleports) {
+            if (pendingTeleport.first != event.player.uniqueId) continue
+
+            event.player.teleport(pendingTeleport.second)
+            plugin.pendingTeleports.remove(pendingTeleport)
+            joinTimeMap[pendingTeleport.first] = System.currentTimeMillis()
+            return
         }
     }
 }
