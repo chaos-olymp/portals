@@ -100,7 +100,7 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
         // Disallow portal block breaking
         if (event.block.type != PORTAL_MATERIAL) return
 
-        plugin.removePortal(event.player, event.block.location)
+        event.isCancelled = true
     }
 
     @EventHandler
