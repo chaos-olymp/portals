@@ -51,14 +51,14 @@ class TeleportCommand(private val plugin: BungeePlugin) : SubCommand {
         }
 
         val serverInfo = plugin.proxy.servers[portal.server]!!
-        serverInfo.sendData(AuthorizeTeleportResponsePluginMessage(sender.uniqueId, portal.world, portal.x, portal.y, portal.z))
+        serverInfo.sendData(AuthorizeTeleportResponsePluginMessage(sender.uniqueId, portal.world, portal.x, portal.y, portal.z, portal.yaw, portal.pitch))
 
         if(sender.server.info != serverInfo) {
             sender.connect(serverInfo)
         }
 
         sender.sendMessage(
-            plugin.messageConfiguration.getMessage("messages.command.teleport.success", Replacement("display-name", portal.displayName ?: portal.name))
+            plugin.messageConfiguration.getMessage("command.teleport.success", Replacement("display-name", portal.displayName ?: portal.name))
         )
     }
 }

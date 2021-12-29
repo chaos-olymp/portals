@@ -21,7 +21,7 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
 
     fun doesNameExist(name: String): Boolean = databaseService.doesNameExist(name)
     
-    fun createPortal(owner: UUID, name: String, server: String, public: Boolean, world: String, x: Int, y: Int, z: Int): Int? {
+    fun createPortal(owner: UUID, name: String, server: String, public: Boolean, world: String, x: Int, y: Int, z: Int, yaw: Float, pitch: Float): Int? {
         // Call event for external listeners
         val event = PortalCreateEvent(owner, name, server, public, world, x, y, z)
         plugin.proxy.pluginManager.callEvent(event)
@@ -32,7 +32,7 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
         }
 
         // Store on database
-        val result = databaseService.createPortal(owner, name, server, public, world, x, y, z)
+        val result = databaseService.createPortal(owner, name, server, public, world, x, y, z, yaw, pitch)
         if(result == null) {
             plugin.logger.severe("Database error occurred in createPortal (Generated Key not present!)")
         } else {

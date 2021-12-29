@@ -33,7 +33,7 @@ class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
 
         sender.sendMessage(
             plugin.messageConfiguration.getMessage(
-                "messages.command.modify.name",
+                "command.modify.name",
                 Replacement("id", id),
                 Replacement("origin-name", name),
                 Replacement("origin-name", value)
@@ -47,7 +47,7 @@ class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
 
         sender.sendMessage(
             plugin.messageConfiguration.getMessage(
-                "messages.command.modify.display-name",
+                "command.modify.display-name",
                 Replacement("id", id),
                 Replacement("name", name),
                 Replacement("display-name", value)
@@ -62,7 +62,7 @@ class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
         if (public) {
             sender.sendMessage(
                 plugin.messageConfiguration.getMessage(
-                    "messages.command.modify.public",
+                    "command.modify.public",
                     Replacement("id", id),
                     Replacement("name", name)
                 )
@@ -70,7 +70,7 @@ class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
         } else {
             sender.sendMessage(
                 plugin.messageConfiguration.getMessage(
-                    "messages.command.modify.private",
+                    "command.modify.private",
                     Replacement("id", id),
                     Replacement("name", name)
                 )

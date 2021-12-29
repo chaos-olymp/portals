@@ -31,6 +31,8 @@ class DatabaseService(
                     	`x` INT NOT NULL,
                     	`y` INT NOT NULL,
                     	`z` INT NOT NULL,
+                        `yaw` FLOAT NOT NULL,
+                        `pitch` FLOAT NOT NULL,
                     	`link` INT unsigned DEFAULT NULL,
                     	PRIMARY KEY (`id`, `name`)
                     )
@@ -69,15 +71,17 @@ class DatabaseService(
         world: String,
         x: Int,
         y: Int,
-        z: Int
+        z: Int,
+        yaw: Float,
+        pitch: Float
     ): Int? {
         databaseProvider.useConnection {
             val stmt =
                 it.prepareAndLogStatement(
                     callback,
                     """
-                INSERT INTO `portals` (owner, name, public, created, server, world, x, y, z) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO `portals` (owner, name, public, created, server, world, x, y, z, yaw, pitch) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
                     Statement.RETURN_GENERATED_KEYS
                 )
@@ -90,6 +94,8 @@ class DatabaseService(
             stmt.setInt(7, x)
             stmt.setInt(8, y)
             stmt.setInt(9, z)
+            stmt.setFloat(10, yaw)
+            stmt.setFloat(11, pitch)
             val affectedRows = stmt.executeUpdate()
             return if (affectedRows == 0) {
                 null
@@ -157,6 +163,8 @@ class DatabaseService(
                     x, 
                     y, 
                     z, 
+                    yaw, 
+                    pitch, 
                     link 
                 FROM `portals` 
                 LIMIT ?, ?
@@ -180,6 +188,8 @@ class DatabaseService(
                 val x = rs.getInt("x")
                 val y = rs.getInt("y")
                 val z = rs.getInt("z")
+                val yaw = rs.getFloat("yaw")
+                val pitch = rs.getFloat("pitch")
                 var link: Int? = rs.getInt("link")
                 if (rs.wasNull()) {
                     link = null
@@ -198,6 +208,8 @@ class DatabaseService(
                     x,
                     y,
                     z,
+                    yaw,
+                    pitch,
                     link
                 )
                 list.add(portal)
@@ -225,6 +237,8 @@ class DatabaseService(
                     x, 
                     y, 
                     z, 
+                    yaw, 
+                    pitch,
                     link 
                 FROM `portals` 
                 WHERE id = ?
@@ -245,6 +259,8 @@ class DatabaseService(
                 val x = rs.getInt("x")
                 val y = rs.getInt("y")
                 val z = rs.getInt("z")
+                val yaw = rs.getFloat("yaw")
+                val pitch = rs.getFloat("pitch")
                 var link: Int? = rs.getInt("link")
                 if (rs.wasNull()) {
                     link = null
@@ -263,6 +279,8 @@ class DatabaseService(
                     x,
                     y,
                     z,
+                    yaw,
+                    pitch,
                     link
                 )
             } else {
@@ -289,6 +307,8 @@ class DatabaseService(
                     x, 
                     y, 
                     z, 
+                    yaw,
+                    pitch,
                     link 
                 FROM `portals` 
                 WHERE name = ?
@@ -309,6 +329,8 @@ class DatabaseService(
                 val x = rs.getInt("x")
                 val y = rs.getInt("y")
                 val z = rs.getInt("z")
+                val yaw = rs.getFloat("yaw")
+                val pitch = rs.getFloat("pitch")
                 var link: Int? = rs.getInt("link")
                 if (rs.wasNull()) {
                     link = null
@@ -327,6 +349,8 @@ class DatabaseService(
                     x,
                     y,
                     z,
+                    yaw,
+                    pitch,
                     link
                 )
             } else {
@@ -606,6 +630,8 @@ class DatabaseService(
                         x, 
                         y, 
                         z, 
+                        yaw,
+                        pitch,
                         link 
                     FROM `portals` 
                     WHERE owner = ?
@@ -636,6 +662,8 @@ class DatabaseService(
                         x, 
                         y, 
                         z, 
+                        yaw,
+                        pitch,
                         link 
                     FROM `portals` 
                     WHERE public = TRUE
@@ -664,7 +692,9 @@ class DatabaseService(
                         world, 
                         x, 
                         y, 
-                        z, 
+                        z,  
+                        yaw,
+                        pitch,
                         link 
                     FROM `portals` 
                     LIMIT ?, ?
@@ -688,6 +718,8 @@ class DatabaseService(
                 val x = rs.getInt("x")
                 val y = rs.getInt("y")
                 val z = rs.getInt("z")
+                val yaw = rs.getFloat("yaw")
+                val pitch = rs.getFloat("pitch")
                 var link: Int? = rs.getInt("link")
                 if (rs.wasNull()) {
                     link = null
@@ -707,6 +739,8 @@ class DatabaseService(
                         x,
                         y,
                         z,
+                        yaw,
+                        pitch,
                         link
                     )
                 )

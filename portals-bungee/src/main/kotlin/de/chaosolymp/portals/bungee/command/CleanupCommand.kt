@@ -24,7 +24,7 @@ class CleanupCommand(private val plugin: BungeePlugin) : SubCommand {
             val itemsToFetch = 100
 
             val portalCount = plugin.portalManager.countPortals()
-            getPlayersToNotify().forEach { p -> p.sendMessage(plugin.messageConfiguration.getMessage("messages.command.cleanup.start", Replacement("portal-count", "$portalCount"))) }
+            getPlayersToNotify().forEach { p -> p.sendMessage(plugin.messageConfiguration.getMessage("command.cleanup.start", Replacement("portal-count", "$portalCount"))) }
 
             var current = 0
 
@@ -44,7 +44,7 @@ class CleanupCommand(private val plugin: BungeePlugin) : SubCommand {
                 getPlayersToNotify().forEach { p ->
                     p.sendMessage(
                         plugin.messageConfiguration.getMessage(
-                            "messages.command.cleanup.progress",
+                            "command.cleanup.progress",
                             Replacement("portal-count", "$portalCount"),
                             Replacement("processed-items", current)
                         )
@@ -54,7 +54,7 @@ class CleanupCommand(private val plugin: BungeePlugin) : SubCommand {
                 current += itemsToFetch
             }
 
-            getPlayersToNotify().forEach { p -> p.sendMessage(plugin.messageConfiguration.getMessage("messages.command.cleanup.end", Replacement("portal-count", "$portalCount"))) }
+            getPlayersToNotify().forEach { p -> p.sendMessage(plugin.messageConfiguration.getMessage("command.cleanup.end", Replacement("portal-count", "$portalCount"))) }
         }
 
         private fun getPlayersToNotify() = plugin.proxy.players.filter { p -> p.hasPermission("portals.cleanup") }

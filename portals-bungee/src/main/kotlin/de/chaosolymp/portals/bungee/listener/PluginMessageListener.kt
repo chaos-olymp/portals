@@ -28,7 +28,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
 
     private fun handleLocationResponsePluginMessage(deserialized: LocationResponsePluginMessage, connection: Connection) {
         if (map.containsKey(deserialized.uuid)) {
-            map[deserialized.uuid]?.complete(LocationResponse(deserialized.canCreatePortal, deserialized.world, deserialized.x, deserialized.y, deserialized.z))
+            map[deserialized.uuid]?.complete(LocationResponse(deserialized.canCreatePortal, deserialized.world, deserialized.x, deserialized.y, deserialized.z, deserialized.yaw, deserialized.pitch))
             map.remove(deserialized.uuid)
         } else {
             plugin.proxy.logger.warning("${connection.socketAddress} sent location request for non-requested uuid ${deserialized.uuid}.")
@@ -65,10 +65,10 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
             plugin.logger.info("Cannot connect, the player is on the same server")
         }
 
-        serverInfo.sendData(AuthorizeTeleportResponsePluginMessage(deserialized.uuid, portal.world, portal.x, portal.y, portal.z))
+        serverInfo.sendData(AuthorizeTeleportResponsePluginMessage(deserialized.uuid, portal.world, portal.x, portal.y, portal.z, portal.yaw, portal.pitch))
 
         player.sendMessage(
-            plugin.messageConfiguration.getMessage("messages.command.teleport.success", Replacement("display-name", portal.displayName ?: portal.name))
+            plugin.messageConfiguration.getMessage("command.teleport.success", Replacement("display-name", portal.displayName ?: portal.name))
         )
     }
 

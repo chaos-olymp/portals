@@ -19,10 +19,12 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
     private val joinTimeMap = mutableMapOf<UUID, Long>()
 
     private val countDownTickMap = mutableMapOf<Player, Int>()
-    private val taskMap = mutableMapOf<Player, Int>()
     private val teleportTicks = 6
 
-    init { scheduleCountdownTask() }
+    init {
+        scheduleCountdownTask()
+        scheduleAppearanceTask()
+    }
 
     private fun scheduleCountdownTask() {
         plugin.server.scheduler.runTaskTimer(plugin, Runnable {
@@ -47,11 +49,8 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, *component)
 
                 if (countDownTickMap[player]!! == teleportTicks) {
-                    val task = taskMap[player]!!
-                    taskMap.remove(player)
                     countDownTickMap.remove(player)
                     plugin.teleport(player, block)
-                    plugin.server.scheduler.cancelTask(task)
                     return@Runnable
                 }
                 countDownTickMap[player] = countDownTickMap[player]!!.inc()
@@ -60,9 +59,29 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
         }, 0L, 7L)
     }
 
+    private fun scheduleAppearanceTask() {
+        plugin.server.scheduler.runTaskTimer(plugin, Runnable {
+            for (player in plugin.server.onlinePlayers) {
+                // Get block at moving-to location
+                val world = player.location.world ?: continue
+                val block = world.getBlockAt(player.location)
+
+                // Only handle blocks with typeof PORTAL_MATERIAL
+                if (block.type != PORTAL_MATERIAL) continue
+
+                if(!countDownTickMap.containsKey(player)) {
+                    // Show particles
+                    plugin.handlePortalAppearance(player)
+                }
+            }
+        }, 0L, 1L)
+    }
+
     @EventHandler
     fun handleSneakInPortal(event: PlayerToggleSneakEvent) {
         if (!event.isSneaking) return
+
+        val player = event.player
 
         // Get block at moving-to location
         val world = event.player.location.world ?: return
@@ -71,15 +90,9 @@ class PortalListener(private val plugin: BukkitPlugin) : Listener {
         // Only handle blocks with typeof PORTAL_MATERIAL
         if (block.type != PORTAL_MATERIAL) return
 
-        val player = event.player
-
-        // Show particles
-        plugin.handlePortalAppearance(player)
-
         if (!countDownTickMap.containsKey(player)) {
-            countDownTickMap[player]
+            countDownTickMap[player] = 0
         }
-
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

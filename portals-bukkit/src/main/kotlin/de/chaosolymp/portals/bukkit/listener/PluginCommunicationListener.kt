@@ -67,7 +67,9 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
             worldName,
             targetPlayer.location.blockX,
             targetPlayer.location.blockY,
-            targetPlayer.location.blockZ
+            targetPlayer.location.blockZ,
+            targetPlayer.location.yaw,
+            targetPlayer.location.pitch
         )
 
         player.sendPluginMessage(
@@ -92,8 +94,11 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
 
         val y = deserialized.y.toDouble() + 1
 
+        val yaw = deserialized.yaw
+        val pitch = deserialized.pitch
+
         val location =
-            Location(world, x, y, z)
+            Location(world, x, y, z, yaw, pitch)
 
         if (targetPlayer == null) {
             plugin.pendingTeleports.add(Pair(deserialized.uuid, location))

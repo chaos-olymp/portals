@@ -67,7 +67,9 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
                 it.world,
                 it.x,
                 it.y,
-                it.z
+                it.z,
+                it.yaw,
+                it.pitch
             )
 
             // Send error if database returned a uncommon result (No id present)

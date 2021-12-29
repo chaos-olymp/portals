@@ -22,13 +22,13 @@ class DebugCommand(private val plugin: BungeePlugin) : SubCommand {
 
         if(DebugMessenger.targetPlayers.contains(sender)) {
             DebugMessenger.targetPlayers.remove(sender)
-            sender.sendMessage(plugin.messageConfiguration.getMessage("messages.command.debug.disable"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("command.debug.disable"))
             DebugMessenger.info("Debug Mode", "${sender.name} left Debug Mode")
             return
         }
 
         DebugMessenger.info("Debug Mode", "${sender.name} joined Debug Mode")
         DebugMessenger.targetPlayers.add(sender)
-        sender.sendMessage(plugin.messageConfiguration.getMessage("messages.command.debug.enable"))
+        sender.sendMessage(plugin.messageConfiguration.getMessage("command.debug.enable"))
     }
 }
