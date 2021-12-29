@@ -4,16 +4,18 @@ import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.bungee.config.Replacement
 import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.LocationResponse
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
 import java.util.concurrent.CompletableFuture
 
 class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
-    override fun execute(sender: CommandSender, args: Array<out String>?) {
+    override suspend fun execute(sender: CommandSender, args: Array<out String>?) = withContext(plugin.coroutineDispatcher) {
         // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.create")) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
-            return
+            return@withContext
         }
 
         // Send error message if `sender` is not an instance of `ProxiedPlayer`
@@ -21,31 +23,31 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
         // The console is not able to provide a Location
         if (sender !is ProxiedPlayer) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.not-a-player"))
-            return
+            return@withContext
         }
 
         // Validate argument count
         if (args == null || args.size != 1) {
             sender.sendMessage(
-                this.plugin.messageConfiguration.getMessage(
+                plugin.messageConfiguration.getMessage(
                     "error.wrong-syntax",
                     Replacement("syntax", "/portal create <name>")
                 )
             )
-            return
+            return@withContext
         }
 
         // Validate name conventions
         val name = args[0]
         if (!plugin.portalManager.isNameValid(name)) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.wrong-name"))
-            return
+            return@withContext
         }
 
         // Send error message if this portal name is already present in database
         if (plugin.portalManager.doesNameExist(name)) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.name-already-exists"))
-            return
+            return@withContext
         }
 
         // Create CompletableFeature and register a callback function using thenAccept
@@ -59,18 +61,20 @@ class CreateCommand(private val plugin: BungeePlugin) : SubCommand {
             }
 
             // Create portal in database and use the generated id by AUTO_INCREMENT
-            val id = plugin.portalManager.createPortal(
-                sender.uniqueId,
-                name,
-                sender.server.info.name,
-                false,
-                it.world,
-                it.x,
-                it.y,
-                it.z,
-                it.yaw,
-                it.pitch
-            )
+            val id = runBlocking {
+                return@runBlocking plugin.suspendingPortalManager.createPortal(
+                    sender.uniqueId,
+                    name,
+                    sender.server.info.name,
+                    false,
+                    it.world,
+                    it.x,
+                    it.y,
+                    it.z,
+                    it.yaw,
+                    it.pitch
+                )
+            }
 
             // Send error if database returned a uncommon result (No id present)
             if (id == null) {

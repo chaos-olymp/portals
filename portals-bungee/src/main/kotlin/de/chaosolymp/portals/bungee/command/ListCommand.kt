@@ -5,6 +5,7 @@ import de.chaosolymp.portals.core.PortalListType
 import de.chaosolymp.portals.bungee.config.Replacement
 import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.Portal
+import kotlinx.coroutines.withContext
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.chat.ClickEvent
@@ -15,11 +16,11 @@ import net.md_5.bungee.api.chat.hover.content.Text
 class ListCommand(private val plugin: BungeePlugin) : SubCommand {
     private val itemsPerPage = 8
 
-    override fun execute(sender: CommandSender, args: Array<out String>?) {
+    override suspend fun execute(sender: CommandSender, args: Array<out String>?) = withContext(plugin.coroutineDispatcher) {
         // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.list")) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
-            return
+            return@withContext
         }
 
         // Validate arguments
@@ -38,7 +39,7 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
                 mode = PortalListType.ALL
             } else {
                 sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
-                return
+                return@withContext
             }
         }
         else if (args.contains("-public")) {
@@ -48,14 +49,14 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
                 mode = PortalListType.PUBLIC
             } else {
                 sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
-                return
+                return@withContext
             }
         }
 
         // Send message if no valid page provided
         if (page == 0) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.pagination.unknown-number"))
-            return
+            return@withContext
         }
 
         val count = plugin.portalManager.countPortals()
@@ -64,11 +65,11 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
         // Send message if page is out of range
         if (maxPages < page) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.pagination.not-exists"))
-            return
+            return@withContext
         }
 
         val skip = (page - 1) * itemsPerPage
-        val result = plugin.portalManager.getPortals(sender, mode, skip, itemsPerPage)
+        val result = plugin.suspendingPortalManager.getPortals(sender, mode, skip, itemsPerPage)
 
         // Send header component
         sendHeader(sender, page, maxPages)
@@ -87,7 +88,7 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
 
     private fun sendHeader(sender: CommandSender, page: Int, maxPages: Int) {
         sender.sendMessage(
-            this.plugin.messageConfiguration.getMessage(
+            plugin.messageConfiguration.getMessage(
                 "command.list.header",
                 Replacement("current-page", page),
                 Replacement("max-pages", maxPages)

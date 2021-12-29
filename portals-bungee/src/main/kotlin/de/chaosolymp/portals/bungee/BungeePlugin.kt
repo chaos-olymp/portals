@@ -16,8 +16,10 @@ import java.io.File
 
 class BungeePlugin: Plugin() {
     lateinit var portalManager: PortalManager
+    lateinit var suspendingPortalManager: SuspendingPortalManager
     lateinit var messageConfiguration: MessageConfiguration
     lateinit var pluginMessageListener: PluginMessageListener
+    lateinit var coroutineDispatcher: BungeeCoroutineDispatcher
 
     internal lateinit var portalCache: PortalCache
     internal lateinit var exceptionHandler: ExceptionHandler
@@ -38,6 +40,9 @@ class BungeePlugin: Plugin() {
         initializeDatabaseConfig()
         initializeCachingConfig()
 
+        coroutineDispatcher = BungeeCoroutineDispatcher(this)
+        logger.info("Initialized asynchronous coroutine dispatcher")
+
         exceptionHandler = ExceptionHandler(this)
         Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
         logger.info("Initialized global exception handler")
@@ -46,6 +51,7 @@ class BungeePlugin: Plugin() {
         logger.info("Initialized cache")
 
         portalManager = PortalManager(this, databaseService)
+        suspendingPortalManager = SuspendingPortalManager(this)
         logger.info("Initialized portal manager")
 
         portalManager.createTable()

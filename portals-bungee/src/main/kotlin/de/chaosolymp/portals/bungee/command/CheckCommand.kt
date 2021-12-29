@@ -5,6 +5,7 @@ import de.chaosolymp.portals.bungee.extension.sendData
 import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.message.proxy_to_server.ServerInformationRequestPluginMessage
 import de.chaosolymp.portals.core.message.server_to_proxy.ServerInformationResponsePluginMessage
+import kotlinx.coroutines.withContext
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.chat.BaseComponent
@@ -17,10 +18,10 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 class CheckCommand(private val plugin: BungeePlugin) : SubCommand {
-    override fun execute(sender: CommandSender, args: Array<out String>?) {
+    override suspend fun execute(sender: CommandSender, args: Array<out String>?)  = withContext(plugin.coroutineDispatcher) {
         if(!sender.hasPermission("portals.check")) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
-            return
+            return@withContext
         }
 
         sender.sendMessage(ComponentBuilder("Software Check")

@@ -18,6 +18,7 @@ dependencies {
     implementation project(":portals-core")
     implementation group: "com.zaxxer", name: "HikariCP", version: "3.4.5"
     implementation 'com.github.ben-manes.caffeine:caffeine:3.0.4'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0'
     compileOnly bungeecord('1.18-R0.1-SNAPSHOT')
     testImplementation bungeecord('1.18-R0.1-SNAPSHOT')
     testImplementation 'org.jetbrains.kotlin:kotlin-test:1.6.0'

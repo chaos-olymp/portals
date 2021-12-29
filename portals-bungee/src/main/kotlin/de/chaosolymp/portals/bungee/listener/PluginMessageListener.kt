@@ -10,6 +10,9 @@ import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.*
 import de.chaosolymp.portals.core.message.proxy_to_server.*
 import de.chaosolymp.portals.core.message.server_to_proxy.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import net.md_5.bungee.api.config.ServerInfo
 import net.md_5.bungee.api.connection.Connection
 import net.md_5.bungee.api.connection.ProxiedPlayer
@@ -124,14 +127,18 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
             plugin.logger.info("Incoming plugin message of type ${deserialized.javaClass} - $deserialized")
         }
 
-        when (deserialized) {
-            is LocationResponsePluginMessage -> handleLocationResponsePluginMessage(deserialized, event.sender)
-            is AuthorizeTeleportRequestPluginMessage -> handleAuthorizeTeleportRequestPluginMessage(deserialized)
-            is BlockChangeAcceptancePluginMessage -> handleBlockChangeAcceptancePluginMessage(deserialized, event.sender)
-            is ValidationPluginMessage -> handleValidationPluginMessage(deserialized)
-            is ServerInformationResponsePluginMessage -> handleServerInformationResponsePluginMessage(deserialized)
-            is RemovePortalPluginMessage -> handleRemovePortalPluginMessage(deserialized)
-            else -> plugin.logger.warning("Unknown incoming plugin message")
+        runBlocking {
+            launch(plugin.coroutineDispatcher) {
+                when (deserialized) {
+                    is LocationResponsePluginMessage -> handleLocationResponsePluginMessage(deserialized, event.sender)
+                    is AuthorizeTeleportRequestPluginMessage -> handleAuthorizeTeleportRequestPluginMessage(deserialized)
+                    is BlockChangeAcceptancePluginMessage -> handleBlockChangeAcceptancePluginMessage(deserialized, event.sender)
+                    is ValidationPluginMessage -> handleValidationPluginMessage(deserialized)
+                    is ServerInformationResponsePluginMessage -> handleServerInformationResponsePluginMessage(deserialized)
+                    is RemovePortalPluginMessage -> handleRemovePortalPluginMessage(deserialized)
+                    else -> plugin.logger.warning("Unknown incoming plugin message")
+                }
+            }
         }
     }
 

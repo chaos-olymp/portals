@@ -5,14 +5,15 @@ import de.chaosolymp.portals.bungee.config.Replacement
 import de.chaosolymp.portals.bungee.extension.sendData
 import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.message.proxy_to_server.CleanupRequestPluginMessage
+import kotlinx.coroutines.withContext
 import net.md_5.bungee.api.CommandSender
 
 class CleanupCommand(private val plugin: BungeePlugin) : SubCommand {
-    override fun execute(sender: CommandSender, args: Array<out String>?) {
+    override suspend fun execute(sender: CommandSender, args: Array<out String>?)  = withContext(plugin.coroutineDispatcher) {
         // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.cleanup")) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
-            return
+            return@withContext
         }
 
         val worker = Worker(plugin)

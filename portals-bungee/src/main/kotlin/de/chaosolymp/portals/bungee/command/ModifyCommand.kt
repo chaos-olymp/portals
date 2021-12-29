@@ -4,19 +4,20 @@ import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.bungee.config.Replacement
 import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.NumberUtils
+import kotlinx.coroutines.withContext
 import net.md_5.bungee.api.CommandSender
 import java.util.*
 
 class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
 
-    private fun setName(sender: CommandSender, id: Int, value: String) {
+    private suspend fun setName(sender: CommandSender, id: Int, value: String) = withContext(plugin.coroutineDispatcher) {
         if (!plugin.portalManager.isNameValid(value)) {
             sender.sendMessage(
                 plugin.messageConfiguration.getMessage(
                     "error.wrong-name"
                 )
             )
-            return
+            return@withContext
         }
 
         if (plugin.portalManager.doesNameExist(value)) {
@@ -25,11 +26,11 @@ class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
                     "error.name-already-exists"
                 )
             )
-            return
+            return@withContext
         }
 
-        val name = plugin.portalManager.getNameOfId(id)
-        plugin.portalManager.rename(id, value)
+        val name = plugin.suspendingPortalManager.getNameOfId(id)
+        plugin.suspendingPortalManager.rename(id, value)
 
         sender.sendMessage(
             plugin.messageConfiguration.getMessage(
@@ -41,9 +42,9 @@ class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
         )
     }
 
-    private fun setDisplayName(sender: CommandSender, id: Int, value: String) {
-        plugin.portalManager.setDisplayName(id, value)
-        val name = plugin.portalManager.getNameOfId(id)
+    private suspend fun setDisplayName(sender: CommandSender, id: Int, value: String) = withContext(plugin.coroutineDispatcher) {
+        plugin.suspendingPortalManager.setDisplayName(id, value)
+        val name = plugin.suspendingPortalManager.getNameOfId(id)
 
         sender.sendMessage(
             plugin.messageConfiguration.getMessage(
@@ -55,9 +56,9 @@ class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
         )
     }
 
-    private fun setPublic(sender: CommandSender, id: Int, public: Boolean) {
-        plugin.portalManager.setPublic(id, public)
-        val name = plugin.portalManager.getNameOfId(id)
+    private suspend fun setPublic(sender: CommandSender, id: Int, public: Boolean) = withContext(plugin.coroutineDispatcher) {
+        plugin.suspendingPortalManager.setPublic(id, public)
+        val name = plugin.suspendingPortalManager.getNameOfId(id)
 
         if (public) {
             sender.sendMessage(
@@ -78,11 +79,11 @@ class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
         }
     }
 
-    override fun execute(sender: CommandSender, args: Array<out String>?) {
+    override suspend fun execute(sender: CommandSender, args: Array<out String>?) = withContext(plugin.coroutineDispatcher) {
         // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.modify")) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
-            return
+            return@withContext
         }
 
         // Validate argument count
@@ -93,7 +94,7 @@ class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
                     Replacement("syntax", "/portal modify <portal id|name> <name|public|display-name> <value>")
                 )
             )
-            return
+            return@withContext
         }
 
         val portal = args[0]
@@ -104,10 +105,10 @@ class ModifyCommand(private val plugin: BungeePlugin) : SubCommand {
         val id = if (NumberUtils.isNumber(portal)) {
             portal.toInt()
         } else {
-            plugin.portalManager.getIdOfName(portal)
+            plugin.suspendingPortalManager.getIdOfName(portal)
         }
 
-        if (plugin.portalManager.doesPlayerOwnPortalOrHasOtherAccess(sender, id)) {
+        if (plugin.suspendingPortalManager.doesPlayerOwnPortalOrHasOtherAccess(sender, id)) {
             when {
                 option.equals("name", true) -> {
                     val value = args[2]

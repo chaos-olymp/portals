@@ -6,16 +6,18 @@ import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.LocationResponse
 import de.chaosolymp.portals.core.NumberUtils
 import de.chaosolymp.portals.core.Portal
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
 import java.util.concurrent.CompletableFuture
 
 class InfoCommand(private val plugin: BungeePlugin) : SubCommand {
-    override fun execute(sender: CommandSender, args: Array<out String>?) {
+    override suspend fun execute(sender: CommandSender, args: Array<out String>?) = withContext(plugin.coroutineDispatcher) {
         // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.info")) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
-            return
+            return@withContext
         }
 
         // Send error message if `sender` is not an instance of `ProxiedPlayer`
@@ -23,7 +25,7 @@ class InfoCommand(private val plugin: BungeePlugin) : SubCommand {
         // The console is not able to provide a Location
         if (sender !is ProxiedPlayer) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.not-a-player"))
-            return
+            return@withContext
         }
 
         // Validate argument count
@@ -31,27 +33,29 @@ class InfoCommand(private val plugin: BungeePlugin) : SubCommand {
             sender.sendMessage(plugin.messageConfiguration.getMessage(
                 "error.wrong-syntax",
                 Replacement("syntax", "/portal info [name]")))
-            return
+            return@withContext
         }
 
         if(args.isEmpty()) {
-            // Create CompletableFeature and register a callback function using thenAccept
+            // Create CompletableFuture and register a callback function using thenAccept
             val locationFuture = CompletableFuture<LocationResponse>()
             locationFuture.thenAccept {
-                val portalId = plugin.portalManager.getPortalIdAt(sender.server.info.name, it.world, it.x, it.y, it.z)
-                if(portalId == null) {
-                    sender.sendMessage(plugin.messageConfiguration.getMessage(
-                        "error.wrong-syntax",
-                        Replacement("syntax", "/portal info [name]")))
-                } else {
-                    val portal = plugin.portalManager.getPortal(portalId)
-                    processInfo(sender, portal)
+                runBlocking {
+                    val portalId = plugin.suspendingPortalManager.getPortalIdAt(sender.server.info.name, it.world, it.x, it.y, it.z)
+                    if(portalId == null) {
+                        sender.sendMessage(plugin.messageConfiguration.getMessage(
+                            "error.wrong-syntax",
+                            Replacement("syntax", "/portal info [name]")))
+                    } else {
+                        val portal = plugin.suspendingPortalManager.getPortal(portalId)
+                        processInfo(sender, portal)
+                    }
                 }
             }
 
             // Send request plugin message to the server
             plugin.pluginMessageListener.requestLocation(sender, locationFuture)
-            return
+            return@withContext
         }
 
         // Find portal by id if `sender` provided a valid numeric number > 0

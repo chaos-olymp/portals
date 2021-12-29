@@ -6,22 +6,23 @@ import de.chaosolymp.portals.bungee.extension.sendData
 import de.chaosolymp.portals.bungee.extension.sendMessage
 import de.chaosolymp.portals.core.NumberUtils
 import de.chaosolymp.portals.core.message.proxy_to_server.AuthorizeTeleportResponsePluginMessage
+import kotlinx.coroutines.withContext
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.connection.ProxiedPlayer
 
 class TeleportCommand(private val plugin: BungeePlugin) : SubCommand {
-    override fun execute(sender: CommandSender, args: Array<out String>?) {
+    override suspend fun execute(sender: CommandSender, args: Array<out String>?) = withContext(plugin.coroutineDispatcher) {
         // Send error message if `sender` has not the required permission
         if (!sender.hasPermission("portals.teleport")) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.no-permission"))
-            return
+            return@withContext
         }
 
         // Send error message if `sender` is not an instance of `ProxiedPlayer`
         // We need this, to teleport the player
         if (sender !is ProxiedPlayer) {
             sender.sendMessage(plugin.messageConfiguration.getMessage("error.not-a-player"))
-            return
+            return@withContext
         }
 
         // Validate argument count
@@ -32,7 +33,7 @@ class TeleportCommand(private val plugin: BungeePlugin) : SubCommand {
                     Replacement("syntax", "/portal tp <name|id>")
                 )
             )
-            return
+            return@withContext
         }
 
         // Find portal by id if `sender` provided a valid numeric number > 0
@@ -47,7 +48,7 @@ class TeleportCommand(private val plugin: BungeePlugin) : SubCommand {
             sender.sendMessage(
                 plugin.messageConfiguration.getMessage("messages.error.not-exists")
             )
-            return
+            return@withContext
         }
 
         val serverInfo = plugin.proxy.servers[portal.server]!!

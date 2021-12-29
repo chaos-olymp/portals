@@ -3,6 +3,10 @@ package de.chaosolymp.portals.bungee.command
 import de.chaosolymp.portals.bungee.BungeePlugin
 import de.chaosolymp.portals.bungee.DebugMessenger
 import de.chaosolymp.portals.bungee.extension.sendMessage
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import net.md_5.bungee.api.CommandSender
 import net.md_5.bungee.api.plugin.Command
 
@@ -31,13 +35,29 @@ class PortalCommand(private val plugin: BungeePlugin) : Command("portal") {
             val cmd = if(args.isNotEmpty()) {
                 commandRegistry[args[0]] ?: commandRegistry["help"]
             } else {
-                sender.sendMessage(plugin.messageConfiguration.getMessage("messages.error.subcommand-not-exists"))
+                sender.sendMessage(plugin.messageConfiguration.getMessage("error.subcommand-not-exists"))
                 commandRegistry["help"]
             }
-
-            cmd?.execute(sender, if(args.isEmpty()) args else args.copyOfRange(1, args.size))
+            runBlocking {
+                val startTime = System.currentTimeMillis()
+                val job = launch(plugin.coroutineDispatcher) {
+                    cmd?.execute(sender, if(args.isEmpty()) args else args.copyOfRange(1, args.size))
+                }
+                job.invokeOnCompletion { throwable ->
+                    val now = System.currentTimeMillis()
+                    val diff = now - startTime
+                    if(throwable != null) {
+                        sender.sendMessage(plugin.messageConfiguration.getMessage("error.exception-occurred"))
+                        plugin.exceptionHandler.uncaughtException(Thread.currentThread(), throwable)
+                        if(throwable is Exception) {
+                            DebugMessenger.exception("Command Execution", throwable)
+                        }
+                    }
+                    DebugMessenger.verbose("Command Execution", "Command execution took ${diff}ms")
+                }
+            }
         } catch (ex: Exception) {
-            sender.sendMessage(plugin.messageConfiguration.getMessage("messages.error.exception-occurred"))
+            sender.sendMessage(plugin.messageConfiguration.getMessage("error.exception-occurred"))
             plugin.exceptionHandler.uncaughtException(Thread.currentThread(), ex)
             DebugMessenger.exception("Command Execution", ex)
         }
