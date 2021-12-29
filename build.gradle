@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.6.0'
-    id 'com.github.johnrengelman.shadow' version '7.1.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 group 'de.chaosolymp'
@@ -19,7 +19,7 @@ subprojects.each { subproject -> evaluationDependsOn(subproject.path) }
 task allJar(type: Jar, dependsOn: subprojects.build) {
     archiveBaseName.set('portals-all')
     subprojects.each { subproject ->
-        from(subproject.configurations.archives.allArtifacts.files.collect {zipTree(it) }) {
+        from(subproject.configurations.findByName('shadow').allArtifacts.files.collect {zipTree(it) }) {
             duplicatesStrategy(DuplicatesStrategy.WARN)
             exclude 'META-INF/portals-bukkit.kotlin_module'
         }

@@ -22,6 +22,7 @@ dependencies {
 shadowJar {
     project.configurations.implementation.canBeResolved = true
     configurations = [project.configurations.implementation]
+
     relocate('kotlin' as String, project.group + '.portals.annotations.libs.kotlin' as String)
     relocate('org.intellij.lang.annotations' as String, project.group + '.portals.annotations.libs.annotations.intellij' as String)
     relocate('org.jetbrains.annotations' as String, project.group + '.portals.annotations.libs.annotations.jetbrains' as String)

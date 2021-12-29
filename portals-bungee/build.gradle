@@ -32,11 +32,16 @@ test {
 shadowJar {
     project.configurations.implementation.canBeResolved = true
     configurations = [project.configurations.implementation]
+
     relocate('kotlin' as String, project.group + '.portals.bungee.libs.kotlin' as String)
     relocate('org.intellij.lang.annotations' as String, project.group + '.portals.bungee.libs.annotations.intellij' as String)
     relocate('org.jetbrains.annotations' as String, project.group + '.portals.bungee.libs.annotations.jetbrains' as String)
+    relocate('com.google.thirdparty' as String, project.group + '.portals.bungee.libs.annotations.google_thirdparty' as String)
     relocate('com.zaxxer.hikari' as String, project.group + '.portals.core.libs.hikari' as String)
     relocate('org.slf4j' as String, project.group + '.portals.bungee.libs.slf4j' as String)
+    relocate('org.checkerframework' as String, project.group + '.portals.bungee.libs.checkerframework' as String)
+    relocate('com.google.errorprone' as String, project.group + '.portals.bungee.libs.errorprone' as String)
+    relocate('com.github.benmanes.caffeine.cache' as String, project.group + '.portals.bungee.libs.caffeine' as String)
 }
 
 runBungee {

@@ -37,6 +37,7 @@ shadowJar {
     configurations = [project.configurations.implementation]
     relocate('kotlin' as String, project.group + '.portals.core.libs.kotlin' as String)
     relocate('com.zaxxer.hikari' as String, project.group + '.portals.core.libs.hikari' as String)
+    relocate('org.slf4j' as String, project.group + '.portals.core.libs.slf4j' as String)
     relocate('org.intellij.lang.annotations' as String, project.group + '.portals.core.libs.annotations.intellij' as String)
     relocate('org.jetbrains.annotations' as String, project.group + '.portals.core.libs.annotations.jetbrains' as String)
     relocate('com.google.thirdparty' as String, project.group + '.portals.core.libs.annotations.google_thirdparty' as String)
