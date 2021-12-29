@@ -596,9 +596,9 @@ class DatabaseService(
 
     fun doesNameOrIdExist(nameOrId: String): Boolean {
         return if (NumberUtils.isNumber(nameOrId)) {
-            this.doesIdExists(nameOrId.toInt())
+            doesIdExists(nameOrId.toInt())
         } else {
-            this.doesNameExist(nameOrId)
+            doesNameExist(nameOrId)
         }
     }
 

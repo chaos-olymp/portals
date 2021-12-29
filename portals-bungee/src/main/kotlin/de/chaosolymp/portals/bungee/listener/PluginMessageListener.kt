@@ -44,19 +44,21 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
 
         val id = plugin.portalManager.getPortalIdAt(server, deserialized.world, deserialized.x, deserialized.y, deserialized.z)
         if (id == null) {
+            player.sendMessage(plugin.messageConfiguration.getMessage("error.no-portal-at-location"))
             plugin.logger.warning("Caught invalid teleportation - World: ${deserialized.world} X: ${deserialized.x} Y: ${deserialized.y} Z: ${deserialized.z}")
             return
         }
 
         val link = plugin.portalManager.getPortalLink(id)
         if(link == null) {
-            plugin.logger.warning("Cannot perform teleportation because portal #${id} is not linked")
+            player.sendMessage(plugin.messageConfiguration.getMessage("error.no-portal-destination"))
             return
         }
 
         val portal = plugin.portalManager.getPortal(link)
         if(portal == null) {
-            plugin.logger.warning("Not expected behavior: Portal #${id} is linked to #${link} but #${link} is not present in database")
+            player.sendMessage(plugin.messageConfiguration.getMessage("error.portal-destination-corrupt"))
+            plugin.logger.warning("Undefined behavior: Portal #${id} is linked to #${link} but #${link} is not present in database")
             return
         }
 
@@ -64,8 +66,6 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
         if (portal.server != server) {
             player.connect(serverInfo)
             plugin.logger.info("Sent player ${player.name} (${player.uniqueId}) to ${serverInfo.name}")
-        } else {
-            plugin.logger.info("Cannot connect, the player is on the same server")
         }
 
         serverInfo.sendData(AuthorizeTeleportResponsePluginMessage(deserialized.uuid, portal.world, portal.x, portal.y, portal.z, portal.yaw, portal.pitch))

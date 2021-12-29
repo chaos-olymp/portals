@@ -60,7 +60,7 @@ class BukkitPlugin: JavaPlugin {
             logger.info("Skipping plugin channel listener registration because we're in TEST_ENVIRONMENT")
         } else {
             logger.info("Environment: Production")
-            server.messenger.registerIncomingPluginChannel(this, "BungeeCord", this.pluginCommunicationListener)
+            server.messenger.registerIncomingPluginChannel(this, "BungeeCord", pluginCommunicationListener)
             server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
             logger.info("Registered Plugin Channel listeners")
         }
@@ -121,7 +121,7 @@ class BukkitPlugin: JavaPlugin {
         val world = location.world!!
         val spawnLocation = world.spawnLocation
 
-        return spawnLocation.distance(location) < this.server.spawnRadius // player is in spawn radius
+        return spawnLocation.distance(location) < server.spawnRadius // player is in spawn radius
     }
 
     private fun hasRegionPermissions(player: Player): Boolean {

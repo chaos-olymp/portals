@@ -9,5 +9,5 @@ import net.md_5.bungee.api.connection.Server
 fun Server.sendData(message: AbstractPluginMessage) {
     val out = ByteStreams.newDataOutput()
     serialize(message, out)
-    this.sendData("BungeeCord", out.toByteArray())
+    sendData("BungeeCord", out.toByteArray())
 }

@@ -10,5 +10,5 @@ import org.bukkit.plugin.Plugin
 fun Player.sendPluginMessage(plugin: Plugin, message: AbstractPluginMessage) {
     val output = ByteStreams.newDataOutput()
     serialize(message, output)
-    this.sendPluginMessage(plugin, "BungeeCord", output.toByteArray())
+    sendPluginMessage(plugin, "BungeeCord", output.toByteArray())
 }

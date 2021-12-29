@@ -71,13 +71,13 @@ class DatabaseServiceTests {
         val initialCount = databaseService.countPortals()
         assertEquals(0, initialCount)
 
-        databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", true, "test_world", 10, 20, 30)
+        databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", true, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertEquals(1, databaseService.countPortals())
     }
 
     @Test
     fun testRemovePortalById() {
-        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", true, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", true, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
         assertTrue(databaseService.doesIdExists(portalId))
 
@@ -87,7 +87,7 @@ class DatabaseServiceTests {
 
     @Test
     fun testRemovePortalByName() {
-        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", true, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", true, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
         assertTrue(databaseService.doesIdExists(portalId))
 
@@ -100,7 +100,7 @@ class DatabaseServiceTests {
 
     @Test
     fun testSetPublicById() {
-        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
         assertTrue(databaseService.doesIdExists(portalId))
 
@@ -113,7 +113,7 @@ class DatabaseServiceTests {
 
     @Test
     fun testSetPublicByName() {
-        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
         assertTrue(databaseService.doesIdExists(portalId))
 
@@ -131,10 +131,10 @@ class DatabaseServiceTests {
 
     @Test
     fun testLinkage() {
-        val originPortalId = databaseService.createPortal(UUID.randomUUID(), "first_portal", "test_server", false, "test_world", 10, 20, 30)
+        val originPortalId = databaseService.createPortal(UUID.randomUUID(), "first_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(originPortalId)
 
-        val targetPortalId = databaseService.createPortal(UUID.randomUUID(), "second_portal", "test_server", false, "test_world", 20, 20, 30)
+        val targetPortalId = databaseService.createPortal(UUID.randomUUID(), "second_portal", "test_server", false, "test_world", 20, 20, 30, 0.0F, 0.0F)
         assertNotNull(targetPortalId)
 
         val initialLinkOfOriginPortalId = databaseService.getPortalLink(originPortalId)
@@ -149,7 +149,7 @@ class DatabaseServiceTests {
 
     @Test
     fun testRename() {
-        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
 
         val initialName = databaseService.getNameOfId(portalId)
@@ -162,7 +162,7 @@ class DatabaseServiceTests {
 
     @Test
     fun testGetPortalIdAt() {
-        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
 
         val obtainedPortalId = databaseService.getPortalIdAt("test_server", "test_world", 10, 20, 30)
@@ -174,7 +174,7 @@ class DatabaseServiceTests {
     @Test
     fun testDoesPlayerOwnPortalTrue() {
         val uuid = UUID.randomUUID()
-        val portalId = databaseService.createPortal(uuid, "test_portal", "test_server", false, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(uuid, "test_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
 
         assertTrue(databaseService.doesPlayerOwnPortal(uuid, portalId))
@@ -183,7 +183,7 @@ class DatabaseServiceTests {
     @Test
     fun testDoesPlayerOwnPortalFalse() {
         val uuid = UUID.randomUUID()
-        val portalId = databaseService.createPortal(uuid, "test_portal", "test_server", false, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(uuid, "test_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
 
         assertFalse(databaseService.doesPlayerOwnPortal(UUID.randomUUID(), portalId))
@@ -191,7 +191,7 @@ class DatabaseServiceTests {
 
     @Test
     fun testDoesIdExists() {
-        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
 
         assertTrue(databaseService.doesIdExists(portalId))
@@ -199,7 +199,7 @@ class DatabaseServiceTests {
 
     @Test
     fun testDoesNameOrIdExists() {
-        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
 
         assertTrue(databaseService.doesNameOrIdExist("test_portal"))
@@ -208,7 +208,7 @@ class DatabaseServiceTests {
 
     @Test
     fun testSetDisplayName() {
-        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
 
         val initialPortal = databaseService.getPortal(portalId)
@@ -225,7 +225,7 @@ class DatabaseServiceTests {
 
     @Test
     fun testGetIdOfName() {
-        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30)
+        val portalId = databaseService.createPortal(UUID.randomUUID(), "test_portal", "test_server", false, "test_world", 10, 20, 30, 0.0F, 0.0F)
         assertNotNull(portalId)
 
         val obtainedId = databaseService.getIdOfName("test_portal")
@@ -237,7 +237,7 @@ class DatabaseServiceTests {
     @Test
     fun testGetOffsetLimit() {
         for(i in 1 until 30) {
-            databaseService.createPortal(UUID.randomUUID(), "test_portal_$i", "test_server", false, "test_world", i, 20, 30)
+            databaseService.createPortal(UUID.randomUUID(), "test_portal_$i", "test_server", false, "test_world", i, 20, 30, 0.0F, 0.0F)
         }
 
         val firstFive = databaseService.getPortals(0, 5)

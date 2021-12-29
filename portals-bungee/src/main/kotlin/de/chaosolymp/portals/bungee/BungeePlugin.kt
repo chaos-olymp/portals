@@ -57,7 +57,7 @@ class BungeePlugin: Plugin() {
         portalManager.createTable()
 
         pluginMessageListener = PluginMessageListener(this)
-        proxy.pluginManager.registerListener(this, this.pluginMessageListener)
+        proxy.pluginManager.registerListener(this, pluginMessageListener)
         logger.info("Registered plugin message listener")
 
         proxy.pluginManager.registerCommand(this, PortalCommand(this))
@@ -68,7 +68,7 @@ class BungeePlugin: Plugin() {
 
     private fun initializeMessageConfig() {
         val provider = ConfigurationProvider.getProvider(YamlConfiguration::class.java)
-        val file = File(this.dataFolder, "messages.yml")
+        val file = File(dataFolder, "messages.yml")
         if(file.exists()) {
             val yamlConfig = provider.load(file)
             messageConfiguration = MessageConfiguration(yamlConfig)
@@ -115,7 +115,7 @@ class BungeePlugin: Plugin() {
             } else {
                 logger.severe("Error whilst loading configuration file")
             }
-            this.logger.info("Loaded configuration file ${file.name}")
+            logger.info("Loaded configuration file ${file.name}")
         } else {
             if(file.createNewFile()) {
                 val defaultConfig = Configuration()

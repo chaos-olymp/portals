@@ -21,6 +21,9 @@ class MessageConfiguration(private val config: Configuration) {
             config.set("messages.error.no-access-to-linked-portal", "%prefix% &cDu hast keine Berechtigung auf das zu verlinkende Portal. Bitte stelle sicher, dass der Portalbesitzer dies nicht auf Privat gestellt hat um es zu verlinken.")
             config.set("messages.error.no-access-to-portal", "%prefix% &cDies ist nicht dein Portal.")
             config.set("messages.error.not-exists", "%prefix% &cDieses Portal existiert nicht.")
+            config.set("messages.error.no-portal-at-location", "%prefix% &cDie Datenbank enthält hier kein Portal - Bitte kontaktiere einen Administrator.")
+            config.set("messages.error.portal-destination-corrupt", "%prefix% &cDie Zielportalinformationen konnten nicht gefunden werden - Bitte kontaktiere einen Administrator.")
+            config.set("messages.error.no-portal-destination", "%prefix% &cDieses Portal wurde nicht mit einem Zielportal verknüpft.")
             config.set("messages.error.no-region-access", "%prefix% &cDu kannst hier kein Portal erstellen. Bitte überprüfe deine Berechtigungen hier sowie ob du auf einem Endportalrahmen stehst.")
             config.set("messages.error.origin-not-exists", "%prefix% &cDas Ursprungsportal existiert nicht.")
             config.set("messages.error.link-not-exists", "%prefix% &cDas Zielportal existiert nicht.")
@@ -60,17 +63,17 @@ class MessageConfiguration(private val config: Configuration) {
         }
     }
 
-    fun getMessage(key: String, vararg replacements: Replacement): Array<BaseComponent> = TextComponent.fromLegacyText(this.getLanguageElement("messages.$key", *replacements), ChatColor.WHITE)
+    fun getMessage(key: String, vararg replacements: Replacement): Array<BaseComponent> = TextComponent.fromLegacyText(getLanguageElement("messages.$key", *replacements), ChatColor.WHITE)
 
-    private fun getVariable(key: String, vararg replacements: Replacement) = this.getLanguageElement("variables.$key", *replacements)
+    private fun getVariable(key: String, vararg replacements: Replacement) = getLanguageElement("variables.$key", *replacements)
 
     private fun getAllVariableKeys(): MutableCollection<String>? = config.getSection("variables").keys
 
     private fun getLanguageElement(key: String, vararg replacements: Replacement): String {
-        var string = ChatColor.translateAlternateColorCodes('&', this.config.getString(key)!!)
+        var string = ChatColor.translateAlternateColorCodes('&', config.getString(key)!!)
 
         replacements.forEach { string = string.replace("{${it.key}}", it.value.toString()) }
-        this.getAllVariableKeys()?.forEach { string = if(string.contains("%$it%")) string.replace("%$it%", this.getVariable(it)) else string }
+        getAllVariableKeys()?.forEach { string = if(string.contains("%$it%")) string.replace("%$it%", getVariable(it)) else string }
 
         return string
     }
