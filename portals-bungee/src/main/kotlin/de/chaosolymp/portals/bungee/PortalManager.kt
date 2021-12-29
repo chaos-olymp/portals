@@ -182,6 +182,10 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
 
     fun countPortals(): Int = databaseService.countPortals()
 
+    fun countPublicPortals(): Int = databaseService.countPublicPortals()
+
+    fun countPortalsOfPlayer(uuid: UUID): Int = databaseService.countPortalsOfPlayer(uuid)
+
     fun doesNameOrIdExist(nameOrId: String): Boolean = databaseService.doesNameOrIdExist(nameOrId)
 
     fun doesPlayerOwnPortalOrHasOtherAccess(sender: CommandSender, id: Int): Boolean = if(sender is ProxiedPlayer) {

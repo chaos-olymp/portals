@@ -559,6 +559,41 @@ class DatabaseService(
         }
     }
 
+    fun countPublicPortals(): Int {
+        databaseProvider.useConnection {
+            val query =
+                it.prepareAndLogStatement(
+                    callback,
+                    """
+                SELECT COUNT(*)
+                FROM `portals`
+                WHERE public = TRUE
+            """.trimIndent()
+                )
+            val rs = query.executeQuery()
+            rs.next()
+            return rs.getInt(1)
+        }
+    }
+
+    fun countPortalsOfPlayer(uuid: UUID): Int {
+        databaseProvider.useConnection {
+            val query =
+                it.prepareAndLogStatement(
+                    callback,
+                    """
+                SELECT COUNT(*)
+                FROM `portals`
+                WHERE owner = ?
+            """.trimIndent()
+                )
+            query.setBytes(1, UUIDUtils.getBytesFromUUID(uuid))
+            val rs = query.executeQuery()
+            rs.next()
+            return rs.getInt(1)
+        }
+    }
+
     fun doesNameOrIdExist(nameOrId: String): Boolean {
         return if (NumberUtils.isNumber(nameOrId)) {
             this.doesIdExists(nameOrId.toInt())

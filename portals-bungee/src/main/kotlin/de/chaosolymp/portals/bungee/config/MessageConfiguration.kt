@@ -26,6 +26,7 @@ class MessageConfiguration(private val config: Configuration) {
             config.set("messages.error.link-not-exists", "%prefix% &cDas Zielportal existiert nicht.")
             config.set("messages.error.pagination.unknown-number", "%prefix% &cDies ist keine valide Seitenzahl.")
             config.set("messages.error.pagination.not-exists", "%prefix% &cDiese Seite existiert nicht.")
+            config.set("messages.error.pagination.no-portals-found", "%prefix% &cEs wurden keine Portale gefunden (ggf. solltest du deine Suchkritierien anpassen).")
             config.set("messages.error.exception-occurred", "%prefix% &cEin ungewöhnlicher Fehler ist aufgetreten. Die Administratoren wurden benachrichtigt.")
             config.set("messages.information.debug-join", "%prefix% &9Du befindest dich noch im Debug-Modus")
             config.set("messages.command.debug.enable", "%prefix% &9Du bist nun im Debug-Modus.")

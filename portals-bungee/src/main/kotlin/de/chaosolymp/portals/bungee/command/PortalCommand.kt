@@ -53,7 +53,11 @@ class PortalCommand(private val plugin: BungeePlugin) : Command("portal") {
                             DebugMessenger.exception("Command Execution", throwable)
                         }
                     }
-                    DebugMessenger.verbose("Command Execution", "Command execution took ${diff}ms")
+                    if(diff > 3_000) {
+                        DebugMessenger.warning("Command Execution", "Command execution took ${diff}ms")
+                    } else {
+                        DebugMessenger.verbose("Command Execution", "Command execution took ${diff}ms")
+                    }
                 }
             }
         } catch (ex: Exception) {

@@ -99,4 +99,16 @@ class SuspendingPortalManager(private val plugin: BungeePlugin) {
     suspend fun doesIdExists(id: Int): Boolean = withContext(plugin.coroutineDispatcher) {
         return@withContext plugin.portalManager.doesIdExists(id)
     }
+
+    suspend fun countPortals(): Int = withContext(plugin.coroutineDispatcher) {
+        return@withContext plugin.portalManager.countPortals()
+    }
+
+    suspend fun countPublicPortals(): Int = withContext(plugin.coroutineDispatcher) {
+        return@withContext plugin.portalManager.countPublicPortals()
+    }
+
+    suspend fun countPortalsOfPlayer(uuid: UUID): Int = withContext(plugin.coroutineDispatcher) {
+        return@withContext plugin.portalManager.countPortalsOfPlayer(uuid)
+    }
 }
