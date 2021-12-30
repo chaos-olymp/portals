@@ -43,16 +43,16 @@ jobs:
         name: PluginMessageGenerated.kt
         path: ./portals-core/build/generated/source/kaptKotlin/main/de/chaosolymp/portals/core/message/generated/PluginMessageGenerated.kt
         if-no-files-found: warn
-    - name: Run tests
-      run: ./gradlew test
-    - name: Upload core test results
-      uses: EnricoMi/publish-unit-test-result-action@v1
-      if: always()
-      with:
-        files: ./portals-core/build/test-results/**/*.xml
-    - name: Upload bukkit test results
-      uses: EnricoMi/publish-unit-test-result-action@v1
-      if: always()
-      with:
-        files: ./portals-bukkit/build/test-results/**/*.xml
+    #- name: Run tests
+    #  run: ./gradlew test
+    #- name: Upload core test results
+    #  uses: EnricoMi/publish-unit-test-result-action@v1
+    #  if: always()
+    #  with:
+    #    files: ./portals-core/build/test-results/**/*.xml
+    #- name: Upload bukkit test results
+    #  uses: EnricoMi/publish-unit-test-result-action@v1
+    #  if: always()
+    #  with:
+    #    files: ./portals-bukkit/build/test-results/**/*.xml
       # Currently there are no bungeecord tests
