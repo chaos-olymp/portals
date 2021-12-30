@@ -3,13 +3,16 @@ package de.chaosolymp.portals.core
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import de.chaosolymp.portals.core.infrastructure.HikariDatabaseProvider
+import org.junit.ClassRule
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.platform.commons.logging.Logger
 import org.junit.platform.commons.logging.LoggerFactory
+import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import java.util.*
@@ -26,8 +29,14 @@ class DatabaseServiceTests {
     private lateinit var databaseService: DatabaseService
     private lateinit var container: MySQLContainer<*>
 
+    private fun skipIfDockerNotPresent() {
+        Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable, "Docker is not available on this environment");
+    }
+
     @BeforeEach
     fun setup() {
+        skipIfDockerNotPresent()
+
         container = MySQLContainer<Nothing>("mysql:8.0.27").apply {
             withDatabaseName("portals")
             withExposedPorts(3306)

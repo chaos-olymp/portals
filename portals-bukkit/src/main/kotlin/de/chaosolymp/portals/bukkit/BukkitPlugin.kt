@@ -12,6 +12,7 @@ import de.chaosolymp.portals.core.message.server_to_proxy.RemovePortalPluginMess
 import de.chaosolymp.portals.core.message.server_to_proxy.ValidationPluginMessage
 import net.md_5.bungee.api.ChatMessageType
 import net.md_5.bungee.api.chat.ComponentBuilder
+import org.bukkit.ChatColor
 import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.configuration.file.YamlConfiguration
@@ -86,7 +87,7 @@ class BukkitPlugin: JavaPlugin {
     }
 
     internal fun handlePortalAppearance(player: Player) {
-        val builder = ComponentBuilder(config.getString("messages.sneak-to-tp"))
+        val builder = ComponentBuilder(ChatColor.translateAlternateColorCodes('&', config.getString("messages.sneak-to-tp")!!))
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, *builder.create())
     }
     

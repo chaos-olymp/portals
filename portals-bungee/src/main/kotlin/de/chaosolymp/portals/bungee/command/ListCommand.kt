@@ -142,16 +142,16 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
         }
 
         if (hasPrevious) {
-            paginationBuilder.append("< ").color(ChatColor.AQUA)
+            paginationBuilder.append("< ").color(ChatColor.DARK_GRAY)
             paginationBuilder.event(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portal list ${page - 1} $flag"))
         } else {
             paginationBuilder.append(" ")
         }
 
-        paginationBuilder.append("-------------------").color(ChatColor.DARK_AQUA)
+        paginationBuilder.append("-------------------").color(ChatColor.DARK_GRAY)
 
         if (hasNext) {
-            paginationBuilder.append(" >").color(ChatColor.AQUA)
+            paginationBuilder.append(" >").color(ChatColor.DARK_GRAY)
             paginationBuilder.event(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portal list ${page + 1} $flag"))
         }
 
@@ -223,7 +223,7 @@ class ListCommand(private val plugin: BungeePlugin) : SubCommand {
 
         // Set click and hover events for these components
         component.forEach {
-            it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portals info ${portal.id}")
+            it.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/portal info ${portal.id}")
             it.hoverEvent = HoverEvent(
                 HoverEvent.Action.SHOW_TEXT,
                 Text(plugin.messageConfiguration.getMessage("command.list.hover"))

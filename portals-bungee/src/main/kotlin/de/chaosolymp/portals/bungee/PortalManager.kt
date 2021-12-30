@@ -19,11 +19,11 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
 
     fun isNameValid(name: String) = name.isNotEmpty() && name.length < 33 && !NumberUtils.isNumber(name) && regex.matches(name)
 
-    fun doesNameExist(name: String): Boolean = databaseService.doesNameExist(name)
+    fun doesNameExist(name: String): Boolean = databaseService.doesNameExist(name.lowercase(Locale.getDefault()))
     
     fun createPortal(owner: UUID, name: String, server: String, public: Boolean, world: String, x: Int, y: Int, z: Int, yaw: Float, pitch: Float): Int? {
         // Call event for external listeners
-        val event = PortalCreateEvent(owner, name, server, public, world, x, y, z)
+        val event = PortalCreateEvent(owner, name.lowercase(Locale.getDefault()), server, public, world, x, y, z)
         plugin.proxy.pluginManager.callEvent(event)
 
         if(event.isCancelled) {
@@ -32,7 +32,7 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
         }
 
         // Store on database
-        val result = databaseService.createPortal(owner, name, server, public, world, x, y, z, yaw, pitch)
+        val result = databaseService.createPortal(owner, name.lowercase(Locale.getDefault()), server, public, world, x, y, z, yaw, pitch)
         if(result == null) {
             plugin.logger.severe("Database error occurred in createPortal (Generated Key not present!)")
         } else {
@@ -68,7 +68,7 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
 
     fun getPortal(id: Int): Portal? = databaseService.getPortal(id)
 
-    fun getPortal(name: String): Portal? = databaseService.getPortal(name)
+    fun getPortal(name: String): Portal? = databaseService.getPortal(name.lowercase(Locale.getDefault()))
 
     fun remove(id: Int) {
         // Call event for external listeners
@@ -111,14 +111,16 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
     }
 
     fun getIdOfName(name: String): Int {
-        val cacheValue = plugin.portalCache.nameIdCache.getIfPresent(name)
+        val lowerName = name.lowercase(Locale.getDefault())
+
+        val cacheValue = plugin.portalCache.nameIdCache.getIfPresent(lowerName)
         if(cacheValue != null) return cacheValue
 
-        val id = databaseService.getIdOfName(name)
+        val id = databaseService.getIdOfName(lowerName)
 
         // Cache for faster access times
-        plugin.portalCache.nameIdCache.put(name, id)
-        plugin.portalCache.idNameCache.put(id, name)
+        plugin.portalCache.nameIdCache.put(lowerName, id)
+        plugin.portalCache.idNameCache.put(id, lowerName)
 
         return id
     }
@@ -134,17 +136,18 @@ class PortalManager(private val plugin: BungeePlugin, private val databaseServic
     }
 
     fun rename(id: Int, name: String) {
-        databaseService.rename(id, name)
+        val lowerName = name.lowercase(Locale.getDefault())
+        databaseService.rename(id, lowerName)
 
         // Invalidate cache
         plugin.portalCache.idNameCache.invalidate(id)
         plugin.portalCache.nameIdCache.invalidateAll()
 
         // Cache for faster access times
-        plugin.portalCache.nameIdCache.put(name, id)
-        plugin.portalCache.idNameCache.put(id, name)
+        plugin.portalCache.nameIdCache.put(lowerName, id)
+        plugin.portalCache.idNameCache.put(id, lowerName)
 
-        plugin.logger.info("Renamed portal with id #$id to `$name`")
+        plugin.logger.info("Renamed portal with id #$id to `$lowerName`")
     }
 
     fun setDisplayName(id: Int, name: String) {

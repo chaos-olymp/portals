@@ -46,7 +46,7 @@ class TeleportCommand(private val plugin: BungeePlugin) : SubCommand {
 
         if(portal == null) {
             sender.sendMessage(
-                plugin.messageConfiguration.getMessage("messages.error.not-exists")
+                plugin.messageConfiguration.getMessage("error.not-exists")
             )
             return@withContext
         }
