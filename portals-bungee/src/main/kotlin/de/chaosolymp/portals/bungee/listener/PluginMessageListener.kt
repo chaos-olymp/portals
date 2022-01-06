@@ -136,7 +136,7 @@ class PluginMessageListener(val plugin: BungeePlugin) : Listener {
                     is ValidationPluginMessage -> handleValidationPluginMessage(deserialized)
                     is ServerInformationResponsePluginMessage -> handleServerInformationResponsePluginMessage(deserialized)
                     is RemovePortalPluginMessage -> handleRemovePortalPluginMessage(deserialized)
-                    else -> plugin.logger.warning("Unknown incoming plugin message")
+                    else -> {}
                 }
             }
         }
