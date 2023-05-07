@@ -41,7 +41,7 @@ class PluginCommunicationListener(private val plugin: BukkitPlugin) : PluginMess
             is ValidationResponsePluginMessage -> handleValidationResponsePluginMessage(deserialized)
             is ServerInformationRequestPluginMessage -> handleServerInformationRequestPluginMessage(player)
             is CleanupRequestPluginMessage -> handleCleanupRequestPluginMessage(player, deserialized)
-            else -> plugin.logger.warning("Unknown incoming plugin message")
+            else -> {}
         }
     }
 
